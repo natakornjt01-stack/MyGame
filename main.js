@@ -287,6 +287,7 @@ class GameScene extends Phaser.Scene{
   });
   this.physics.add.collider(player,enemies,this.handlePlayerEnemyCollision,null,this);
 
+   
   checkpoints=this.physics.add.staticGroup();
   currentStage.checkpoints.forEach(c=>{
    this.createCheckpoint(c.x,c.index);
