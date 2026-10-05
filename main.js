@@ -1868,7 +1868,7 @@ handleQuestProgress(done=[]){
   );
  }
 
- // INVENTORY
+// INVENTORY
 toggleInventory(){
  if(
   gameOver||
@@ -1879,10 +1879,13 @@ toggleInventory(){
 
  inventoryOpen=!inventoryOpen;
 
- if(inventoryOpen)
+ if(inventoryOpen){
+  this.input.setTopOnly(true);
   this.showInventory();
- else
+ }else{
+  this.input.setTopOnly(true);
   this.hideInventory();
+ }
 }
 
  showInventory()
@@ -2039,13 +2042,13 @@ this.createEquipmentSlot(
     inventory.getSlot(i);
 
    const slot=this.add.rectangle(
-    x,
-    y,
-    125,
-    52,
-    0x1f2937,
-    1
-   );
+ x,
+ y,
+ 135,
+ 56,
+ 0x1f2937,
+  1
+);
 
    slot.setStrokeStyle(
     2,
@@ -2238,10 +2241,17 @@ this.createEquipmentSlot(
   this.refreshInventory();
  }
 
- refreshInventory(){
-  this.hideInventory();
-  this.showInventory();
- }
+ // INVENTORY
+refreshInventory(){
+ this.time.delayedCall(
+  50,
+  ()=>{
+   if(!inventoryOpen)return;
+   this.hideInventory();
+   this.showInventory();
+  }
+ );
+}
 
  hideInventory(){
   if(inventoryPanel){
