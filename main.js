@@ -186,6 +186,10 @@ const UI_TEXT_COLOR='#ffffff';
 const UI_TEXT_STROKE='#000000';
 const UI_TEXT_STROKE_WIDTH=4;
 
+// SAVE / LOAD
+const SAVE_KEY='mygame-save-v1';
+const SAVE_VERSION=1;
+
 // GLOBAL
 let player=null;
 let playerVisual=null;
@@ -249,6 +253,8 @@ let inventory=null;
 let inventoryOpen=false;
 let inventoryPanel=null;
 let inventoryRefreshTimer=null;
+let saveKey=null;
+let loadKey=null;
 
 // EQUIPMENT
 let equipment=null;
@@ -379,6 +385,12 @@ questTrackerText=null;
   checkpointX=200;
   checkpointY=GROUND_Y-HITBOX_HEIGHT/2;
 
+  if(data.keepProgress){
+   activeCheckpoint=Number.isFinite(data.activeCheckpoint)?data.activeCheckpoint:0;
+   checkpointX=Number.isFinite(data.checkpointX)?data.checkpointX:checkpointX;
+   checkpointY=Number.isFinite(data.checkpointY)?data.checkpointY:checkpointY;
+  }
+
   skillButtons={};
 
   this.input.addPointer(3);
@@ -412,9 +424,12 @@ questTrackerText=null;
 
   this.createPlayerAnimations();
 
+  const spawnX=data.keepProgress&&Number.isFinite(data.playerX)?data.playerX:200;
+  const spawnY=data.keepProgress&&Number.isFinite(data.playerY)?data.playerY:GROUND_Y-HITBOX_HEIGHT/2;
+
   player=this.add.rectangle(
-   200,
-   GROUND_Y-HITBOX_HEIGHT/2,
+   spawnX,
+   spawnY,
    HITBOX_WIDTH,
    HITBOX_HEIGHT,
    0xffffff,
@@ -435,8 +450,8 @@ questTrackerText=null;
   );
 
   playerVisual=this.add.sprite(
-   200,
-   GROUND_Y-PLAYER_HEIGHT/2,
+   spawnX,
+   spawnY-(PLAYER_HEIGHT-HITBOX_HEIGHT)/2,
    'idle1'
   );
 
@@ -577,6 +592,14 @@ this.createNPCs();
 this.questKey=this.input.keyboard.addKey(
  Phaser.Input.Keyboard.KeyCodes.Q
 );
+
+  saveKey=this.input.keyboard.addKey(
+   Phaser.Input.Keyboard.KeyCodes.F6
+  );
+
+  loadKey=this.input.keyboard.addKey(
+   Phaser.Input.Keyboard.KeyCodes.F7
+  );
    
 
   this.cameras.main.startFollow(
@@ -607,11 +630,22 @@ this.questKey=this.input.keyboard.addKey(
   this.createCheckpointUI();
    this.createQuestUI();
   this.createMobileControls();
+  if(data.keepProgress)this.saveGame(false);
  }
 
  // UPDATE
  update(){
   if(!player||!player.body)return;
+
+  if(saveKey&&Phaser.Input.Keyboard.JustDown(saveKey)){
+   this.saveGame();
+   return;
+  }
+
+  if(loadKey&&Phaser.Input.Keyboard.JustDown(loadKey)){
+   this.loadGame();
+   return;
+  }
 
   if(!gameOver&&!stageTransitioning)
    this.checkStageComplete();
@@ -873,6 +907,120 @@ if(questOpen){
   this.updateEnemies();
  }
 
+ // SAVE / LOAD
+ getSaveData(){
+  return{
+   version:SAVE_VERSION,
+   savedAt:new Date().toISOString(),
+   stage:currentStageNumber,
+   playerX:player?.x??200,
+   playerY:player?.y??checkpointY,
+   playerHP,
+   coinCount,
+   playerLevel,
+   playerEXP,
+   playerEXPRequired,
+   activeCheckpoint,
+   checkpointX,
+   checkpointY,
+   inventory:inventory?.getData()??[],
+   equipment:equipment?.getData()??[],
+   quest:quest?.getData()??[]
+  };
+ }
+
+ saveGame(showMessage=true){
+  try{
+   localStorage.setItem(SAVE_KEY,JSON.stringify(this.getSaveData()));
+   console.log('GAME SAVED');
+   if(showMessage)this.showSaveMessage('GAME SAVED',0x86efac);
+   return true;
+  }catch(error){
+   console.error('SAVE FAILED:',error);
+   if(showMessage)this.showSaveMessage('SAVE FAILED',0xff5555);
+   return false;
+  }
+ }
+
+ loadGame(){
+  let data=null;
+
+  try{
+   const raw=localStorage.getItem(SAVE_KEY);
+   if(!raw){
+    this.showSaveMessage('NO SAVE DATA',0xffd166);
+    return false;
+   }
+
+   data=JSON.parse(raw);
+   if(!data||data.version!==SAVE_VERSION||![1,2].includes(Number(data.stage))){
+    throw new Error('Invalid save data');
+   }
+  }catch(error){
+   console.error('LOAD FAILED:',error);
+   this.showSaveMessage('LOAD FAILED',0xff5555);
+   return false;
+  }
+
+  this.hideInventory();
+  this.hideSkillPanel();
+  this.hideQuestPanel();
+  this.closeShopPanel();
+  this.closeNPCPanel();
+
+  this.scene.restart({
+   stage:Number(data.stage),
+   keepProgress:true,
+   playerX:Number(data.playerX),
+   playerY:Number(data.playerY),
+   playerHP:Number(data.playerHP),
+   coinCount:Number(data.coinCount),
+   playerLevel:Number(data.playerLevel),
+   playerEXP:Number(data.playerEXP),
+   playerEXPRequired:Number(data.playerEXPRequired),
+   activeCheckpoint:Number(data.activeCheckpoint),
+   checkpointX:Number(data.checkpointX),
+   checkpointY:Number(data.checkpointY),
+   inventory:Array.isArray(data.inventory)?data.inventory:[],
+   equipment:Array.isArray(data.equipment)?data.equipment:[],
+   quest:Array.isArray(data.quest)?data.quest:[]
+  });
+
+  console.log('GAME LOADED');
+  return true;
+ }
+
+ clearSave(){
+  localStorage.removeItem(SAVE_KEY);
+  this.showSaveMessage('SAVE CLEARED',0xffd166);
+ }
+
+ showSaveMessage(text,color=0x86efac){
+  const message=this.add.text(
+   GAME_WIDTH/2,
+   115,
+   text,
+   {
+    fontFamily:'monospace',
+    fontSize:'20px',
+    fontStyle:'bold',
+    color:'#ffffff',
+    stroke:'#000000',
+    strokeThickness:4
+   }
+  ).setOrigin(.5).setScrollFactor(0).setDepth(1000);
+
+  message.setTint(color);
+  this.tweens.add({
+   targets:message,
+   y:85,
+   alpha:0,
+   duration:900,
+   ease:'Cubic.easeOut',
+   onComplete:()=>message.destroy()
+  });
+ }
+
  // STAGE
  checkStageComplete(){
   if(currentStageNumber>=2)return;
@@ -887,6 +1035,8 @@ if(questOpen){
 
  completeStage(){
   if(stageTransitioning)return;
+
+  this.saveGame(false);
 
   stageTransitioning=true;
 
@@ -2641,6 +2791,7 @@ refreshInventory(){
   );
 
   this.updateCheckpointUI();
+  this.saveGame(false);
   this.createCheckpointEffect(checkpoint);
 
   const message=this.add.text(
@@ -5385,6 +5536,36 @@ talkButton.on(
   );
 
   inventoryButton.label.setFontSize(10);
+
+  const saveButton=this.createControlButton(
+   700,
+   430,
+   62,
+   30,
+   'SAVE'
+  );
+
+  saveButton.label.setFontSize(9);
+
+  const loadButton=this.createControlButton(
+   770,
+   430,
+   58,
+   30,
+   'LOAD'
+  );
+
+  loadButton.label.setFontSize(8);
+
+  saveButton.on(
+   'pointerdown',
+   ()=>this.saveGame()
+  );
+
+  loadButton.on(
+   'pointerdown',
+   ()=>this.loadGame()
+  );
 
   leftButton.on(
    'pointerdown',
