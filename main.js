@@ -1,3 +1,4 @@
+// IMPORT
 import Phaser from 'phaser';
 import stage1 from './stages/stage1.js';
 import stage2 from './stages/stage2.js';
@@ -17,7 +18,8 @@ window.addEventListener('unhandledrejection',e=>{
 
 // CONFIG
 const GAME_WIDTH=800;
-const GAME_HEIGHT=450;
+const GAME_HEIGHT=600;
+const CONTROL_AREA_Y=525;
 const WORLD_GRAVITY=700;
 const PLAYER_MAX_FALL_SPEED=650;
 
@@ -174,7 +176,8 @@ let jumpButton=null;
 let attackButton=null;
 let powerButton=null;
 let inventoryButton=null;
-let skillButton=null;
+let skillButtons={};
+let controlArea=null;
 
 // STAGE
 let currentStage=stage1;
@@ -187,7 +190,6 @@ let rightPressed=false;
 let jumpPressed=false;
 let attackPressed=false;
 let powerPressed=false;
-let skillPressed=false;
 
 // PLAYER
 let playerHP=PLAYER_MAX_HP;
@@ -319,7 +321,6 @@ class GameScene extends Phaser.Scene{
   jumpPressed=false;
   attackPressed=false;
   powerPressed=false;
-  skillPressed=false;
 
   playerFacing=1;
   lastAttackTime=0;
@@ -336,6 +337,8 @@ class GameScene extends Phaser.Scene{
   activeCheckpoint=0;
   checkpointX=200;
   checkpointY=GROUND_Y-HITBOX_HEIGHT/2;
+
+  skillButtons={};
 
   this.input.addPointer(3);
 
@@ -573,6 +576,7 @@ class GameScene extends Phaser.Scene{
    (currentVisualHeight-HITBOX_HEIGHT)/2;
 
   this.updateCoins();
+  this.updateMobileSkillButtons();
 
   if(playerPowered&&!gameOver){
    const remaining=
@@ -598,12 +602,6 @@ class GameScene extends Phaser.Scene{
     this.skillKey
    )
   ){
-   this.toggleSkillPanel();
-   return;
-  }
-
-  if(skillPressed){
-   skillPressed=false;
    this.toggleSkillPanel();
    return;
   }
@@ -724,7 +722,6 @@ class GameScene extends Phaser.Scene{
    );
 
    jumpPressed=false;
-
   }else if(!onGround){
    jumpPressed=false;
   }
@@ -1124,6 +1121,7 @@ class GameScene extends Phaser.Scene{
    this.skillBurst(skill);
 
   this.updateSkillPanel();
+  this.updateMobileSkillButtons();
  }
 
  skillFrontAttack(skill){
@@ -1318,6 +1316,152 @@ class GameScene extends Phaser.Scene{
    ease:'Cubic.easeOut',
    onComplete:()=>ring.destroy()
   });
+ }
+
+ // MOBILE SKILL BUTTONS
+ createSkillButton(id,x,y,icon){
+  const button=this.add.rectangle(
+   x,
+   y,
+   72,
+   62,
+   0x222222,
+   .72
+  );
+
+  button.setStrokeStyle(
+   2,
+   0xa855f7,
+   1
+  );
+
+  button.setInteractive({
+   useHandCursor:false
+  });
+
+  button.setScrollFactor(0);
+  button.setDepth(100);
+
+  const iconText=this.add.text(
+   x,
+   y-13,
+   icon,
+   {
+    fontFamily:'sans-serif',
+    fontSize:'21px',
+    fontStyle:'bold',
+    color:'#ffffff'
+   }
+  ).setOrigin(.5)
+   .setScrollFactor(0)
+   .setDepth(101);
+
+  const name=this.add.text(
+   x,
+   y+7,
+   id==='slash'?'SLASH':
+   id==='heal'?'HEAL':
+   'BURST',
+   {
+    fontFamily:'monospace',
+    fontSize:'9px',
+    fontStyle:'bold',
+    color:'#ffffff'
+   }
+  ).setOrigin(.5)
+   .setScrollFactor(0)
+   .setDepth(101);
+
+  const cooldown=this.add.text(
+   x,
+   y+23,
+   'READY',
+   {
+    fontFamily:'monospace',
+    fontSize:'8px',
+    fontStyle:'bold',
+    color:'#7dd3fc'
+   }
+  ).setOrigin(.5)
+   .setScrollFactor(0)
+   .setDepth(101);
+
+  button.skillId=id;
+  button.cooldownText=cooldown;
+  button.nameText=name;
+  button.iconText=iconText;
+
+  skillButtons[id]=button;
+
+  button.on(
+   'pointerdown',
+   ()=>{
+    button.setAlpha(.9);
+    this.useSkill(id);
+   }
+  );
+
+  button.on(
+   'pointerup',
+   ()=>{
+    button.setAlpha(
+     skills&&
+     skills.getRemaining(id)>0?
+     .4:
+     .72
+    );
+   }
+  );
+
+  button.on(
+   'pointerupoutside',
+   ()=>{
+    button.setAlpha(
+     skills&&
+     skills.getRemaining(id)>0?
+     .4:
+     .72
+    );
+   }
+  );
+
+  return button;
+ }
+
+ updateMobileSkillButtons(){
+  if(!skills)return;
+
+  Object.values(skillButtons).forEach(
+   button=>{
+    if(
+     !button||
+     !button.active||
+     !button.cooldownText
+    )
+     return;
+
+    const left=
+     skills.getRemaining(
+      button.skillId
+     );
+
+    button.cooldownText.setText(
+     left>0?
+     (left/1000).toFixed(1)+'s':
+     'READY'
+    );
+
+    button.cooldownText.setColor(
+     left>0?
+     '#fca5a5':
+     '#7dd3fc'
+    );
+
+    button.setAlpha(
+     left>0?.4:.72
+    );
+   }
+  );
  }
 
  // INVENTORY
@@ -1795,14 +1939,9 @@ class GameScene extends Phaser.Scene{
      );
 
      if(coin.coinSymbol){
-      coin.coinSymbol.x=
-       coin.x;
-
-      coin.coinSymbol.y=
-       coin.y;
-
-      coin.coinSymbol.rotation=
-       coin.rotation;
+      coin.coinSymbol.x=coin.x;
+      coin.coinSymbol.y=coin.y;
+      coin.coinSymbol.rotation=coin.rotation;
      }
     }
    );
@@ -1822,14 +1961,9 @@ class GameScene extends Phaser.Scene{
      );
 
      if(coin.coinSymbol){
-      coin.coinSymbol.x=
-       coin.x;
-
-      coin.coinSymbol.y=
-       coin.y;
-
-      coin.coinSymbol.rotation=
-       coin.rotation;
+      coin.coinSymbol.x=coin.x;
+      coin.coinSymbol.y=coin.y;
+      coin.coinSymbol.rotation=coin.rotation;
      }
     }
    );
@@ -1859,10 +1993,7 @@ class GameScene extends Phaser.Scene{
    coin.magnetized=true;
 
    if(coin.body)
-    coin.body.setVelocity(
-     0,
-     0
-    );
+    coin.body.setVelocity(0,0);
 
    this.createCoinMagnetEffect(
     coin
@@ -1935,36 +2066,28 @@ class GameScene extends Phaser.Scene{
 
  // CHECKPOINT
  createCheckpoint(x,index){
-  const groundTop=
-   GROUND_Y;
+  const groundTop=GROUND_Y;
 
-  const checkpoint=
-   this.add.rectangle(
-    x,
-    groundTop-
-    CHECKPOINT_HEIGHT/2,
-    CHECKPOINT_WIDTH,
-    CHECKPOINT_HEIGHT,
-    0xffffff,
-    0
-   );
+  const checkpoint=this.add.rectangle(
+   x,
+   groundTop-CHECKPOINT_HEIGHT/2,
+   CHECKPOINT_WIDTH,
+   CHECKPOINT_HEIGHT,
+   0xffffff,
+   0
+  );
 
   this.physics.add.existing(
    checkpoint,
    true
   );
 
-  checkpoint.checkpointIndex=
-   index;
-
+  checkpoint.checkpointIndex=index;
   checkpoint.checkpointX=x;
-
   checkpoint.checkpointY=
-   groundTop-
-   HITBOX_HEIGHT/2;
+   groundTop-HITBOX_HEIGHT/2;
 
   checkpoint.setVisible(false);
-
   checkpoints.add(checkpoint);
 
   const pole=this.add.rectangle(
@@ -2051,46 +2174,40 @@ class GameScene extends Phaser.Scene{
    return;
 
   activeCheckpoint=index;
-  checkpointX=
-   checkpoint.checkpointX;
+  checkpointX=checkpoint.checkpointX;
+  checkpointY=checkpoint.checkpointY;
 
-  checkpointY=
-   checkpoint.checkpointY;
+  checkpoints.getChildren().forEach(
+   cp=>{
+    if(!cp||!cp.active)return;
 
-  checkpoints.getChildren()
-   .forEach(
-    cp=>{
-     if(!cp||!cp.active)return;
+    const active=
+     cp.checkpointIndex<=
+     activeCheckpoint;
 
-     const active=
-      cp.checkpointIndex<=
-      activeCheckpoint;
+    if(cp.flag)
+     cp.flag.setFillStyle(
+      active?
+      0x38d9ff:
+      0xffd84a
+     );
 
-     if(cp.flag)
-      cp.flag.setFillStyle(
-       active?
-       0x38d9ff:
-       0xffd84a
-      );
+    if(cp.glow){
+     cp.glow.setFillStyle(
+      active?
+      0x38d9ff:
+      0xffd84a
+     );
 
-     if(cp.glow){
-      cp.glow.setFillStyle(
-       active?
-       0x38d9ff:
-       0xffd84a
-      );
-
-      cp.glow.setAlpha(
-       active?.18:.10
-      );
-     }
+     cp.glow.setAlpha(
+      active?.18:.10
+     );
     }
-   );
+   }
+  );
 
   this.updateCheckpointUI();
-  this.createCheckpointEffect(
-   checkpoint
-  );
+  this.createCheckpointEffect(checkpoint);
 
   const message=this.add.text(
    checkpoint.x,
@@ -2358,9 +2475,7 @@ class GameScene extends Phaser.Scene{
 
  // ANIMATION
  createPlayerAnimations(){
-  if(!this.anims.exists(
-   'player-idle'
-  )){
+  if(!this.anims.exists('player-idle')){
    this.anims.create({
     key:'player-idle',
     frames:[
@@ -2374,9 +2489,7 @@ class GameScene extends Phaser.Scene{
    });
   }
 
-  if(!this.anims.exists(
-   'player-walk'
-  )){
+  if(!this.anims.exists('player-walk')){
    this.anims.create({
     key:'player-walk',
     frames:[
@@ -2400,9 +2513,7 @@ class GameScene extends Phaser.Scene{
    playerVisual.anims.currentAnim?.key!==
    'player-idle'
   )
-   playerVisual.play(
-    'player-idle'
-   );
+   playerVisual.play('player-idle');
  }
 
  playWalkAnimation(){
@@ -2412,9 +2523,7 @@ class GameScene extends Phaser.Scene{
    playerVisual.anims.currentAnim?.key!==
    'player-walk'
   )
-   playerVisual.play(
-    'player-walk'
-   );
+   playerVisual.play('player-walk');
  }
 
  // PLATFORM
@@ -2551,9 +2660,7 @@ class GameScene extends Phaser.Scene{
   coin.magnetized=false;
   coin.isDrop=false;
 
-  this.physics.add.existing(
-   coin
-  );
+  this.physics.add.existing(coin);
 
   if(
    coin.body&&
@@ -2563,17 +2670,9 @@ class GameScene extends Phaser.Scene{
     COIN_SIZE/2
    );
 
-   coin.body.setAllowGravity(
-    false
-   );
-
-   coin.body.setImmovable(
-    true
-   );
-
-   coin.body.setCollideWorldBounds(
-    true
-   );
+   coin.body.setAllowGravity(false);
+   coin.body.setImmovable(true);
+   coin.body.setCollideWorldBounds(true);
   }
 
   coins.add(coin);
@@ -2664,9 +2763,7 @@ class GameScene extends Phaser.Scene{
   coin.magnetized=false;
   coin.isDrop=true;
 
-  this.physics.add.existing(
-   coin
-  );
+  this.physics.add.existing(coin);
 
   if(
    coin.body&&
@@ -2676,30 +2773,12 @@ class GameScene extends Phaser.Scene{
     COIN_SIZE/2
    );
 
-   coin.body.setAllowGravity(
-    true
-   );
-
-   coin.body.setImmovable(
-    false
-   );
-
-   coin.body.setBounce(
-    COIN_DROP_BOUNCE
-   );
-
-   coin.body.setCollideWorldBounds(
-    true
-   );
-
-   coin.body.setDragX(
-    COIN_DROP_DRAG_X
-   );
-
-   coin.body.setMaxVelocity(
-    600,
-    700
-   );
+   coin.body.setAllowGravity(true);
+   coin.body.setImmovable(false);
+   coin.body.setBounce(COIN_DROP_BOUNCE);
+   coin.body.setCollideWorldBounds(true);
+   coin.body.setDragX(COIN_DROP_DRAG_X);
+   coin.body.setMaxVelocity(600,700);
   }
 
   coinDrops.add(coin);
@@ -2777,9 +2856,7 @@ class GameScene extends Phaser.Scene{
        coin.active&&
        !coin.collected
       )
-       this.removeCoin(
-        coin
-       );
+       this.removeCoin(coin);
      }
     );
   }
@@ -2841,9 +2918,7 @@ class GameScene extends Phaser.Scene{
   }
 
   if(coin.coinSymbol)
-   coin.coinSymbol.setVisible(
-    false
-   );
+   coin.coinSymbol.setVisible(false);
 
   const value=
    coin.coinValue||
@@ -2853,21 +2928,20 @@ class GameScene extends Phaser.Scene{
 
   this.updateCoinUI();
 
-  const collectText=
-   this.add.text(
-    coin.x,
-    coin.y-10,
-    `+${value}`,
-    {
-     fontFamily:'monospace',
-     fontSize:'20px',
-     fontStyle:'bold',
-     color:'#fff6a0',
-     stroke:'#000000',
-     strokeThickness:3
-    }
-   ).setOrigin(.5)
-    .setDepth(50);
+  const collectText=this.add.text(
+   coin.x,
+   coin.y-10,
+   `+${value}`,
+   {
+    fontFamily:'monospace',
+    fontSize:'20px',
+    fontStyle:'bold',
+    color:'#fff6a0',
+    stroke:'#000000',
+    strokeThickness:3
+   }
+  ).setOrigin(.5)
+   .setDepth(50);
 
   this.tweens.add({
    targets:collectText,
@@ -2954,9 +3028,7 @@ class GameScene extends Phaser.Scene{
    config.color
   ).setDepth(7);
 
-  this.physics.add.existing(
-   enemy
-  );
+  this.physics.add.existing(enemy);
 
   enemy.enemyType=type;
   enemy.enemyConfig=config;
@@ -2977,31 +3049,19 @@ class GameScene extends Phaser.Scene{
    config.height
   );
 
-  enemy.body.setCollideWorldBounds(
-   true
-  );
-
+  enemy.body.setCollideWorldBounds(true);
   enemy.body.setMaxVelocityY(
    PLAYER_MAX_FALL_SPEED
   );
 
   if(config.gravity){
-   enemy.body.setAllowGravity(
-    true
-   );
+   enemy.body.setAllowGravity(true);
   }else{
-   enemy.body.setAllowGravity(
-    false
-   );
-
-   enemy.body.setImmovable(
-    false
-   );
+   enemy.body.setAllowGravity(false);
+   enemy.body.setImmovable(false);
   }
 
-  enemy.body.setVelocityX(
-   config.speed
-  );
+  enemy.body.setVelocityX(config.speed);
 
   enemy.label=this.add.text(
    x,
@@ -3018,24 +3078,22 @@ class GameScene extends Phaser.Scene{
   ).setOrigin(.5)
    .setDepth(20);
 
-  enemy.hpBarBackground=
-   this.add.rectangle(
-    x,
-    y-config.height/2-8,
-    46,
-    6,
-    0x222222
-   ).setDepth(20);
+  enemy.hpBarBackground=this.add.rectangle(
+   x,
+   y-config.height/2-8,
+   46,
+   6,
+   0x222222
+  ).setDepth(20);
 
-  enemy.hpBar=
-   this.add.rectangle(
-    x-21,
-    y-config.height/2-8,
-    42,
-    4,
-    0xff3333
-   ).setOrigin(0,.5)
-    .setDepth(21);
+  enemy.hpBar=this.add.rectangle(
+   x-21,
+   y-config.height/2-8,
+   42,
+   4,
+   0xff3333
+  ).setOrigin(0,.5)
+   .setDepth(21);
 
   enemies.add(enemy);
 
@@ -3047,176 +3105,143 @@ class GameScene extends Phaser.Scene{
   if(!enemies||!player)
    return;
 
-  enemies.getChildren()
-   .forEach(
-    enemy=>{
-     if(
-      !enemy||
-      !enemy.active||
-      !enemy.body
-     )
-      return;
+  enemies.getChildren().forEach(
+   enemy=>{
+    if(
+     !enemy||
+     !enemy.active||
+     !enemy.body
+    )
+     return;
 
-     const config=
-      enemy.enemyConfig;
+    const config=enemy.enemyConfig;
 
-     const distance=
-      Phaser.Math.Distance.Between(
-       player.x,
-       player.y,
-       enemy.x,
-       enemy.y
+    const distance=
+     Phaser.Math.Distance.Between(
+      player.x,
+      player.y,
+      enemy.x,
+      enemy.y
+     );
+
+    if(
+     distance<=
+     ENEMY_DETECT_DISTANCE
+    )
+     enemy.isChasing=true;
+
+    if(
+     distance>=
+     ENEMY_LOSE_DISTANCE
+    )
+     enemy.isChasing=false;
+
+    if(enemy.enemyType==='bat'){
+     if(enemy.isChasing){
+      const dx=player.x-enemy.x;
+      const dy=player.y-70-enemy.y;
+      const d=Math.sqrt(dx*dx+dy*dy)||1;
+
+      enemy.body.setVelocityX(
+       dx/d*enemy.speed
       );
 
-     if(
-      distance<=
-      ENEMY_DETECT_DISTANCE
-     )
-      enemy.isChasing=true;
+      enemy.body.setVelocityY(
+       dy/d*enemy.speed
+      );
 
-     if(
-      distance>=
-      ENEMY_LOSE_DISTANCE
-     )
-      enemy.isChasing=false;
-
-     if(
-      enemy.enemyType===
-      'bat'
-     ){
-      if(enemy.isChasing){
-       const dx=
-        player.x-enemy.x;
-
-       const dy=
-        player.y-70-
-        enemy.y;
-
-       const d=
-        Math.sqrt(
-         dx*dx+
-         dy*dy
-        )||1;
-
-       enemy.body.setVelocityX(
-        dx/d*enemy.speed
-       );
-
-       enemy.body.setVelocityY(
-        dy/d*enemy.speed
-       );
-
-       enemy.direction=
-        dx<0?-1:1;
-
-      }else{
-       const left=
-        enemy.spawnX-
-        enemy.patrolDistance;
-
-       const right=
-        enemy.spawnX+
-        enemy.patrolDistance;
-
-       if(enemy.x<=left)
-        enemy.direction=1;
-
-       if(enemy.x>=right)
-        enemy.direction=-1;
-
-       enemy.body.setVelocityX(
-        enemy.direction*
-        enemy.speed
-       );
-
-       enemy.body.setVelocityY(
-        Math.sin(
-         this.time.now/300+
-         enemy.spawnX
-        )*25
-       );
-      }
-
+      enemy.direction=dx<0?-1:1;
      }else{
-      if(enemy.isChasing){
+      const left=
+       enemy.spawnX-
+       enemy.patrolDistance;
 
-       if(
-        player.x<
-        enemy.x
-       ){
-        enemy.direction=-1;
+      const right=
+       enemy.spawnX+
+       enemy.patrolDistance;
 
-        enemy.body.setVelocityX(
-         -enemy.speed
-        );
+      if(enemy.x<=left)
+       enemy.direction=1;
 
-       }else{
-        enemy.direction=1;
+      if(enemy.x>=right)
+       enemy.direction=-1;
 
-        enemy.body.setVelocityX(
-         enemy.speed
-        );
-       }
+      enemy.body.setVelocityX(
+       enemy.direction*
+       enemy.speed
+      );
 
-      }else{
-       const left=
-        enemy.spawnX-
-        enemy.patrolDistance;
-
-       const right=
-        enemy.spawnX+
-        enemy.patrolDistance;
-
-       if(enemy.x<=left)
-        enemy.direction=1;
-
-       if(enemy.x>=right)
-        enemy.direction=-1;
-
+      enemy.body.setVelocityY(
+       Math.sin(
+        this.time.now/300+
+        enemy.spawnX
+       )*25
+      );
+     }
+    }else{
+     if(enemy.isChasing){
+      if(player.x<enemy.x){
+       enemy.direction=-1;
        enemy.body.setVelocityX(
-        enemy.direction*
+        -enemy.speed
+       );
+      }else{
+       enemy.direction=1;
+       enemy.body.setVelocityX(
         enemy.speed
        );
       }
-     }
+     }else{
+      const left=
+       enemy.spawnX-
+       enemy.patrolDistance;
 
-     const h=
-      config.height/2;
+      const right=
+       enemy.spawnX+
+       enemy.patrolDistance;
 
-     if(enemy.label){
-      enemy.label.x=enemy.x;
-      enemy.label.y=
-       enemy.y-h-18;
-     }
+      if(enemy.x<=left)
+       enemy.direction=1;
 
-     if(enemy.hpBarBackground){
-      enemy.hpBarBackground.x=
-       enemy.x;
+      if(enemy.x>=right)
+       enemy.direction=-1;
 
-      enemy.hpBarBackground.y=
-       enemy.y-h-8;
-     }
-
-     if(enemy.hpBar){
-      enemy.hpBar.x=
-       enemy.x-21;
-
-      enemy.hpBar.y=
-       enemy.y-h-8;
-
-      const percent=
-       Phaser.Math.Clamp(
-        enemy.hp/
-        enemy.maxHP,
-        0,
-        1
-       );
-
-      enemy.hpBar.displayWidth=
-       42*percent;
+      enemy.body.setVelocityX(
+       enemy.direction*
+       enemy.speed
+      );
      }
     }
-   );
+
+    const h=config.height/2;
+
+    if(enemy.label){
+     enemy.label.x=enemy.x;
+     enemy.label.y=enemy.y-h-18;
+    }
+
+    if(enemy.hpBarBackground){
+     enemy.hpBarBackground.x=enemy.x;
+     enemy.hpBarBackground.y=enemy.y-h-8;
+    }
+
+    if(enemy.hpBar){
+     enemy.hpBar.x=enemy.x-21;
+     enemy.hpBar.y=enemy.y-h-8;
+
+     const percent=
+      Phaser.Math.Clamp(
+       enemy.hp/
+       enemy.maxHP,
+       0,
+       1
+      );
+
+     enemy.hpBar.displayWidth=
+      42*percent;
+    }
+   }
+  );
  }
 
  // ATTACK
@@ -3246,52 +3271,51 @@ class GameScene extends Phaser.Scene{
    )+
    stats.atk;
 
-  enemies.getChildren()
-   .forEach(
-    enemy=>{
-     if(
-      !enemy||
-      !enemy.active||
-      !enemy.body
-     )
-      return;
+  enemies.getChildren().forEach(
+   enemy=>{
+    if(
+     !enemy||
+     !enemy.active||
+     !enemy.body
+    )
+     return;
 
-     const dx=
-      enemy.x-player.x;
+    const dx=
+     enemy.x-player.x;
 
-     const dy=
-      Math.abs(
-       enemy.y-player.y
-      );
-
-     const distance=
-      Math.abs(dx);
-
-     if(
-      distance>
-      PLAYER_ATTACK_DISTANCE||
-      dy>90
-     )
-      return;
-
-     if(
-      playerFacing===1&&
-      dx<0
-     )
-      return;
-
-     if(
-      playerFacing===-1&&
-      dx>0
-     )
-      return;
-
-     this.damageEnemy(
-      enemy,
-      attackDamage
+    const dy=
+     Math.abs(
+      enemy.y-player.y
      );
-    }
-   );
+
+    const distance=
+     Math.abs(dx);
+
+    if(
+     distance>
+     PLAYER_ATTACK_DISTANCE||
+     dy>90
+    )
+     return;
+
+    if(
+     playerFacing===1&&
+     dx<0
+    )
+     return;
+
+    if(
+     playerFacing===-1&&
+     dx>0
+    )
+     return;
+
+    this.damageEnemy(
+     enemy,
+     attackDamage
+    );
+   }
+  );
  }
 
  createAttackEffect(){
@@ -3305,24 +3329,18 @@ class GameScene extends Phaser.Scene{
    player.x+
    playerFacing*48;
 
-  const y=
-   player.y-5;
+  const y=player.y-5;
 
-  attackEffect=
-   this.add.arc(
-    x,
-    y,
-    45,
-    playerFacing===1?
-    -70:
-    110,
-    playerFacing===1?
-    70:
-    250,
-    false,
-    0xffffff,
-    0
-   );
+  attackEffect=this.add.arc(
+   x,
+   y,
+   45,
+   playerFacing===1?-70:110,
+   playerFacing===1?70:250,
+   false,
+   0xffffff,
+   0
+  );
 
   attackEffect.setStrokeStyle(
    8,
@@ -3372,9 +3390,7 @@ class GameScene extends Phaser.Scene{
     42*percent;
   }
 
-  enemy.setFillStyle(
-   0xffffff
-  );
+  enemy.setFillStyle(0xffffff);
 
   this.time.delayedCall(
    100,
@@ -3479,11 +3495,8 @@ class GameScene extends Phaser.Scene{
    playerLevel>=
    PLAYER_MAX_LEVEL
   ){
-   playerEXP=
-    playerEXPRequired;
-
+   playerEXP=playerEXPRequired;
    this.updateEXPUI();
-
    return;
   }
 
@@ -3493,21 +3506,20 @@ class GameScene extends Phaser.Scene{
    x!==undefined&&
    y!==undefined
   ){
-   const expGainText=
-    this.add.text(
-     x,
-     y-65,
-     `+${amount} EXP`,
-     {
-      fontFamily:'monospace',
-      fontSize:'16px',
-      fontStyle:'bold',
-      color:'#7dd3fc',
-      stroke:'#000000',
-      strokeThickness:3
-     }
-    ).setOrigin(.5)
-     .setDepth(60);
+   const expGainText=this.add.text(
+    x,
+    y-65,
+    `+${amount} EXP`,
+    {
+     fontFamily:'monospace',
+     fontSize:'16px',
+     fontStyle:'bold',
+     color:'#7dd3fc',
+     stroke:'#000000',
+     strokeThickness:3
+    }
+   ).setOrigin(.5)
+    .setDepth(60);
 
    this.tweens.add({
     targets:expGainText,
@@ -3525,9 +3537,7 @@ class GameScene extends Phaser.Scene{
    playerEXP>=
    playerEXPRequired
   ){
-   playerEXP-=
-    playerEXPRequired;
-
+   playerEXP-=playerEXPRequired;
    this.levelUp();
   }
 
@@ -3540,9 +3550,7 @@ class GameScene extends Phaser.Scene{
    playerLevel>=
    PLAYER_MAX_LEVEL
   ){
-   playerEXP=
-    playerEXPRequired;
-
+   playerEXP=playerEXPRequired;
    return;
   }
 
@@ -3709,18 +3717,12 @@ class GameScene extends Phaser.Scene{
    enemy.active
   ){
    if(enemy.x<player.x)
-    player.body.setVelocityX(
-     250
-    );
+    player.body.setVelocityX(250);
    else
-    player.body.setVelocityX(
-     -250
-    );
+    player.body.setVelocityX(-250);
   }
 
-  player.body.setVelocityY(
-   -250
-  );
+  player.body.setVelocityY(-250);
 
   this.cameras.main.shake(
    120,
@@ -3755,10 +3757,7 @@ class GameScene extends Phaser.Scene{
   }
 
   playerVisual.anims.stop();
-
-  playerVisual.setTint(
-   0xff3333
-  );
+  playerVisual.setTint(0xff3333);
 
   if(deathText){
    deathText.destroy();
@@ -3825,9 +3824,7 @@ class GameScene extends Phaser.Scene{
    respawnText=null;
   }
 
-  this.physics.world.enable(
-   player
-  );
+  this.physics.world.enable(player);
 
   player.body.setEnable(true);
 
@@ -3836,14 +3833,9 @@ class GameScene extends Phaser.Scene{
    HITBOX_HEIGHT
   );
 
-  player.body.setOffset(
-   0,
-   0
-  );
+  player.body.setOffset(0,0);
 
-  player.body.setCollideWorldBounds(
-   true
-  );
+  player.body.setCollideWorldBounds(true);
 
   player.body.setMaxVelocityY(
    PLAYER_MAX_FALL_SPEED
@@ -3868,14 +3860,11 @@ class GameScene extends Phaser.Scene{
   playerPowered=false;
   powerEndTime=0;
 
-  lastDamageTime=
-   Date.now();
+  lastDamageTime=Date.now();
 
   playerVisual.anims.stop();
 
-  playerVisual.setTexture(
-   'idle1'
-  );
+  playerVisual.setTexture('idle1');
 
   playerVisual.setDisplaySize(
    PLAYER_WIDTH,
@@ -3888,17 +3877,14 @@ class GameScene extends Phaser.Scene{
    playerFacing===-1
   );
 
-  playerVisual.x=
-   checkpointX;
+  playerVisual.x=checkpointX;
 
   playerVisual.y=
    checkpointY-
    (PLAYER_HEIGHT-
     HITBOX_HEIGHT)/2;
 
-  playerVisual.play(
-   'player-idle'
-  );
+  playerVisual.play('player-idle');
 
   gameOver=false;
 
@@ -3966,8 +3952,7 @@ class GameScene extends Phaser.Scene{
    .setDepth(100);
 
   hpBar=this.add.rectangle(
-   HP_UI_X-
-   HP_BAR_WIDTH/2+3,
+   HP_UI_X-HP_BAR_WIDTH/2+3,
    HP_UI_Y,
    HP_FILL_WIDTH,
    10,
@@ -4044,19 +4029,17 @@ class GameScene extends Phaser.Scene{
 
  // POWER UI
  createPowerUI(){
-  powerBarBackground=
-   this.add.rectangle(
-    POWER_UI_X,
-    POWER_UI_Y,
-    POWER_BAR_WIDTH,
-    POWER_BAR_HEIGHT,
-    0x222222
-   ).setScrollFactor(0)
-    .setDepth(100);
+  powerBarBackground=this.add.rectangle(
+   POWER_UI_X,
+   POWER_UI_Y,
+   POWER_BAR_WIDTH,
+   POWER_BAR_HEIGHT,
+   0x222222
+  ).setScrollFactor(0)
+   .setDepth(100);
 
   powerBar=this.add.rectangle(
-   POWER_UI_X-
-   POWER_BAR_WIDTH/2+3,
+   POWER_UI_X-POWER_BAR_WIDTH/2+3,
    POWER_UI_Y,
    POWER_FILL_WIDTH,
    10,
@@ -4095,15 +4078,10 @@ class GameScene extends Phaser.Scene{
    powerBar.displayWidth=
     POWER_FILL_WIDTH;
 
-   powerText.setText(
-    'POWER'
-   );
+   powerText.setText('POWER');
 
-   powerText.x=
-    POWER_UI_X;
-
-   powerText.y=
-    POWER_UI_Y;
+   powerText.x=POWER_UI_X;
+   powerText.y=POWER_UI_Y;
 
    return;
   }
@@ -4111,8 +4089,7 @@ class GameScene extends Phaser.Scene{
   const remaining=
    Math.max(
     0,
-    powerEndTime-
-    Date.now()
+    powerEndTime-Date.now()
    );
 
   const seconds=
@@ -4134,11 +4111,8 @@ class GameScene extends Phaser.Scene{
    `POWER ${seconds.toFixed(1)}s`
   );
 
-  powerText.x=
-   POWER_UI_X;
-
-  powerText.y=
-   POWER_UI_Y;
+  powerText.x=POWER_UI_X;
+  powerText.y=POWER_UI_Y;
  }
 
  // EXP UI
@@ -4159,19 +4133,17 @@ class GameScene extends Phaser.Scene{
    .setScrollFactor(0)
    .setDepth(102);
 
-  expBarBackground=
-   this.add.rectangle(
-    EXP_UI_X,
-    EXP_UI_Y,
-    EXP_BAR_WIDTH,
-    EXP_BAR_HEIGHT,
-    0x222222
-   ).setScrollFactor(0)
-    .setDepth(100);
+  expBarBackground=this.add.rectangle(
+   EXP_UI_X,
+   EXP_UI_Y,
+   EXP_BAR_WIDTH,
+   EXP_BAR_HEIGHT,
+   0x222222
+  ).setScrollFactor(0)
+   .setDepth(100);
 
   expBar=this.add.rectangle(
-   EXP_UI_X-
-   EXP_BAR_WIDTH/2+3,
+   EXP_UI_X-EXP_BAR_WIDTH/2+3,
    EXP_UI_Y,
    EXP_FILL_WIDTH,
    10,
@@ -4233,11 +4205,8 @@ class GameScene extends Phaser.Scene{
    `EXP ${playerEXP} / ${playerEXPRequired}`
   );
 
-  expText.x=
-   EXP_UI_X;
-
-  expText.y=
-   EXP_UI_Y;
+  expText.x=EXP_UI_X;
+  expText.y=EXP_UI_Y;
  }
 
  // COIN UI
@@ -4292,80 +4261,98 @@ class GameScene extends Phaser.Scene{
 
  // MOBILE CONTROLS
  createMobileControls(){
-  leftButton=
-   this.createControlButton(
-    90,
-    370,
-    100,
-    70,
-    '◀'
-   );
+  controlArea=this.add.rectangle(
+   GAME_WIDTH/2,
+   CONTROL_AREA_Y,
+   GAME_WIDTH,
+   150,
+   0x111827,
+   .42
+  ).setScrollFactor(0)
+   .setDepth(95);
 
-  rightButton=
-   this.createControlButton(
-    210,
-    370,
-    100,
-    70,
-    '▶'
-   );
-
-  inventoryButton=
-   this.createControlButton(
-    330,
-    370,
-    80,
-    80,
-    'BAG'
-   );
-
-  inventoryButton.label.setFontSize(
-   18
+  controlArea.setStrokeStyle(
+   2,
+   0x475569,
+   .7
   );
 
-  skillButton=
-   this.createControlButton(
-    710,
-    285,
-    90,
-    45,
-    'SKILL'
-   );
-
-  skillButton.label.setFontSize(
-   16
+  leftButton=this.createControlButton(
+   65,
+   525,
+   75,
+   62,
+   '◀'
   );
 
-  powerButton=
-   this.createControlButton(
-    450,
-    370,
-    100,
-    80,
-    'POWER'
-   );
-
-  powerButton.label.setFontSize(
-   20
+  rightButton=this.createControlButton(
+   150,
+   525,
+   75,
+   62,
+   '▶'
   );
 
-  attackButton=
-   this.createControlButton(
-    575,
-    370,
-    100,
-    80,
-    '⚔'
-   );
+  this.createSkillButton(
+   'slash',
+   405,
+   525,
+   '⚔'
+  );
 
-  jumpButton=
-   this.createControlButton(
-    710,
-    370,
-    100,
-    80,
-    'โดด'
-   );
+  this.createSkillButton(
+   'heal',
+   485,
+   525,
+   '+'
+  );
+
+  this.createSkillButton(
+   'burst',
+   565,
+   525,
+   '✦'
+  );
+
+  attackButton=this.createControlButton(
+   645,
+   525,
+   68,
+   62,
+   '⚔'
+  );
+
+  attackButton.label.setFontSize(25);
+
+  jumpButton=this.createControlButton(
+   750,
+   530,
+   82,
+   70,
+   'โดด'
+  );
+
+  jumpButton.label.setFontSize(22);
+
+  powerButton=this.createControlButton(
+   700,
+   475,
+   58,
+   34,
+   'P'
+  );
+
+  powerButton.label.setFontSize(17);
+
+  inventoryButton=this.createControlButton(
+   770,
+   475,
+   58,
+   34,
+   'BAG'
+  );
+
+  inventoryButton.label.setFontSize(10);
 
   leftButton.on(
    'pointerdown',
@@ -4410,11 +4397,6 @@ class GameScene extends Phaser.Scene{
   inventoryButton.on(
    'pointerdown',
    ()=>this.toggleInventory()
-  );
-
-  skillButton.on(
-   'pointerdown',
-   ()=>skillPressed=true
   );
 
   powerButton.on(
