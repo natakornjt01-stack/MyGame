@@ -1951,7 +1951,7 @@ toggleInventory(){
 
   const closeText=this.add.text(
    305,
-   -168,
+   -210,
    'CLOSE',
    {
     fontFamily:'monospace',

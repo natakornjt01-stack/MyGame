@@ -26,7 +26,11 @@ export default class Inventory{
   this.slots[i]=item||null;
   return true;
  }
-
+  
+findEmptySlot(){
+ return this.slots.findIndex(x=>!x);
+}
+  
  addItem(id,count=1){
   if(!ITEMS[id]||count<=0)return false;
   const old=this.slots.find(x=>x&&x.id===id);
