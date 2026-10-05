@@ -1900,7 +1900,8 @@ toggleInventory(){
    GAME_WIDTH/2,
    GAME_HEIGHT/2
   ).setScrollFactor(0)
-   .setDepth(500);
+   .setDepth(500)
+   .setExclusive(true);
 
   const bg=this.add.rectangle(
   0,
@@ -1910,6 +1911,8 @@ toggleInventory(){
   0x111827,
   .98
 );
+
+  bg.setScrollFactor(0);
 
   bg.setStrokeStyle(
    4,
@@ -1950,6 +1953,7 @@ toggleInventory(){
    1
   );
 
+  close.setScrollFactor(0);
   close.setInteractive();
 
   const closeText=this.add.text(
@@ -2045,12 +2049,12 @@ this.createEquipmentSlot(
     inventory.getSlot(i);
 
    const slot=this.add.rectangle(
- x,
- y,
- 135,
- 56,
- 0x1f2937,
-  1
+x,
+y,
+135,
+56,
+0x1f2937,
+ 1
 );
 
    slot.setStrokeStyle(
@@ -2059,6 +2063,7 @@ this.createEquipmentSlot(
     1
    );
 
+   slot.setScrollFactor(0);
    slot.setInteractive();
 
    const name=this.add.text(
@@ -2139,13 +2144,13 @@ this.createEquipmentSlot(
    equipment.get(type);
 
   const slot=this.add.rectangle(
-   x,
-   y,
-   190,
-   55,
-   0x1f2937,
-   1
-  );
+  x,
+  y,
+  190,
+  55,
+  0x1f2937,
+  1
+ );
 
   slot.setStrokeStyle(
    2,
@@ -2155,6 +2160,7 @@ this.createEquipmentSlot(
    1
   );
 
+  slot.setScrollFactor(0);
   slot.setInteractive();
 
   const title=this.add.text(
