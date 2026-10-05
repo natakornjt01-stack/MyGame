@@ -7,13 +7,6 @@ import Equipment from './equipment.js';
 import Skills from './skills.js';
 import Quest from './quest.js';
 
-import Phaser from 'phaser';
-import stage1 from './stages/stage1.js';
-import stage2 from './stages/stage2.js';
-import Inventory from './inventory.js';
-import Equipment from './equipment.js';
-import Skills from './skills.js';
-
 // ERROR DETECTOR
 window.addEventListener('error',e=>{
  console.error(e.error||e.message);
