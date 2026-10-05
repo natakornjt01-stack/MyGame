@@ -1877,15 +1877,13 @@ toggleInventory(){
  )
   return;
 
- if(skillOpen){
-   
-  inventoryOpen=!inventoryOpen;
+ inventoryOpen=!inventoryOpen;
 
-  if(inventoryOpen)
-   this.showInventory();
-  else
-   this.hideInventory();
- }
+ if(inventoryOpen)
+  this.showInventory();
+ else
+  this.hideInventory();
+}
 
  showInventory()
  {
