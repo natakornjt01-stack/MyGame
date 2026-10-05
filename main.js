@@ -6,6 +6,7 @@ import Inventory from './inventory.js';
 import Equipment from './equipment.js';
 import Skills from './skills.js';
 import Quest from './quest.js';
+import NPC from './npc.js';
 
 // ERROR DETECTOR
 window.addEventListener('error',e=>{
@@ -62,6 +63,16 @@ const PLAYER_INVULNERABLE_TIME=800;
 const PLAYER_POWER_MAX_HP=200;
 const PLAYER_POWER_BONUS_HP=100;
 const PLAYER_POWER_DURATION=10000;
+
+// NPC
+let npcObjects=[];
+let nearbyNPC=null;
+let npcOpen=false;
+let npcPanel=null;
+let npcTalkText=null;
+let npcNameText=null;
+let npcPageText=null;
+let talkPressed=false;
 
 // ENEMY
 const ENEMY_TYPES={
@@ -505,6 +516,12 @@ questTrackerText=null;
    null,
    this
   );
+   // NPC
+this.createNPCs();
+   this.npcKey=this.input.keyboard.addKey(
+ Phaser.Input.Keyboard.KeyCodes.E
+);
+   
 
   // INPUT
   cursors=this.input.keyboard.createCursorKeys();
@@ -655,6 +672,28 @@ if(
   )
    this.useSkill('burst');
 
+   // NPC
+this.updateNPCs();
+
+if(
+ Phaser.Input.Keyboard.JustDown(
+  this.npcKey
+ )||
+ talkPressed
+){
+ talkPressed=false;
+ this.talkToNPC();
+}
+
+if(npcOpen){
+ player.body.setVelocity(0,0);
+ if(enemies)
+  enemies.getChildren().forEach(e=>{
+   if(e&&e.body)e.body.setVelocity(0,0);
+  });
+ return;
+}
+   
   if(skillOpen){
    player.body.setVelocity(0,0);
 
@@ -4617,6 +4656,265 @@ questOpen=false;
    );
  }
 
+  // NPC
+createNPCs(){
+ npcObjects=[];
+
+ (currentStage.npcs||[]).forEach(data=>{
+  const npc=new NPC(data);
+
+  const body=this.add.rectangle(
+   npc.x,
+   npc.y-25,
+   42,
+   50,
+   npc.color,
+   1
+  );
+
+  body.setStrokeStyle(
+   3,
+   0xffffff,
+   1
+  );
+
+  const head=this.add.circle(
+   npc.x,
+   npc.y-62,
+   20,
+   0xffd6b3
+  );
+
+  const name=this.add.text(
+   npc.x,
+   npc.y-92,
+   npc.name,
+   {
+    fontFamily:'monospace',
+    fontSize:'9px',
+    fontStyle:'bold',
+    color:'#ffffff',
+    stroke:'#000000',
+    strokeThickness:3
+   }
+  ).setOrigin(.5);
+
+  const mark=this.add.text(
+   npc.x,
+   npc.y-115,
+   '!',
+   {
+    fontFamily:'monospace',
+    fontSize:'24px',
+    fontStyle:'bold',
+    color:'#fbbf24',
+    stroke:'#000000',
+    strokeThickness:4
+   }
+  ).setOrigin(.5);
+
+  npc.body=body;
+  npc.head=head;
+  npc.nameText=name;
+  npc.mark=mark;
+
+  npcObjects.push(npc);
+ });
+}
+
+updateNPCs(){
+ if(!player||!npcObjects.length)return;
+
+ let closest=null;
+ let distance=Infinity;
+
+ npcObjects.forEach(npc=>{
+  if(!npc.body.active)return;
+
+  const d=Phaser.Math.Distance.Between(
+   player.x,
+   player.y,
+   npc.x,
+   npc.y
+  );
+
+  npc.nameText.setText(
+   npc.name
+  );
+
+  npc.mark.setVisible(
+   d<120
+  );
+
+  if(d<120&&d<distance){
+   closest=npc;
+   distance=d;
+  }
+ });
+
+ nearbyNPC=closest;
+
+ if(npcTalkText){
+  npcTalkText.setText(
+   closest?
+   `E / TALK : ${closest.name}`:
+   ''
+  );
+ }
+}
+
+talkToNPC(){
+ if(npcOpen){
+  this.nextNPCDialogue();
+  return;
+ }
+
+ if(!nearbyNPC)return;
+
+ nearbyNPC.reset();
+ npcOpen=true;
+ this.showNPCPanel();
+}
+
+showNPCPanel(){
+ if(!nearbyNPC||npcPanel)return;
+
+ npcPanel=this.add.container(
+  GAME_WIDTH/2,
+  GAME_HEIGHT/2
+ ).setScrollFactor(0)
+  .setDepth(750);
+
+ const bg=this.add.rectangle(
+  0,
+  0,
+  620,
+  250,
+  0x111827,
+  .98
+ );
+
+ bg.setStrokeStyle(
+  4,
+  nearbyNPC.color,
+  1
+ );
+
+ npcNameText=this.add.text(
+  -270,
+  -90,
+  nearbyNPC.name,
+  {
+   fontFamily:'monospace',
+   fontSize:'22px',
+   fontStyle:'bold',
+   color:'#fbbf24',
+   stroke:'#000000',
+   strokeThickness:4
+  }
+ );
+
+ npcPageText=this.add.text(
+  -270,
+  -35,
+  nearbyNPC.getText(),
+  {
+   fontFamily:'monospace',
+   fontSize:'15px',
+   color:'#ffffff',
+   wordWrap:{
+    width:520
+   },
+   lineSpacing:8
+  }
+ );
+
+ const next=this.add.rectangle(
+  190,
+  85,
+  120,
+  40,
+  0x2563eb,
+  1
+ ).setInteractive();
+
+ const nextText=this.add.text(
+  190,
+  85,
+  'NEXT',
+  {
+   fontFamily:'monospace',
+   fontSize:'12px',
+   fontStyle:'bold',
+   color:'#ffffff'
+  }
+ ).setOrigin(.5);
+
+ const close=this.add.rectangle(
+  260,
+  -100,
+  70,
+  30,
+  0x334155,
+  1
+ ).setInteractive();
+
+ const closeText=this.add.text(
+  260,
+  -100,
+  'CLOSE',
+  {
+   fontFamily:'monospace',
+   fontSize:'10px',
+   fontStyle:'bold',
+   color:'#ffffff'
+  }
+ ).setOrigin(.5);
+
+ npcPanel.add([
+  bg,
+  npcNameText,
+  npcPageText,
+  next,
+  nextText,
+  close,
+  closeText
+ ]);
+
+ next.on(
+  'pointerdown',
+  ()=>this.nextNPCDialogue()
+ );
+
+ close.on(
+  'pointerdown',
+  ()=>this.closeNPCPanel()
+ );
+}
+
+nextNPCDialogue(){
+ if(!nearbyNPC)return;
+
+ if(nearbyNPC.next()){
+  npcPageText.setText(
+   nearbyNPC.getText()
+  );
+ }else{
+  this.closeNPCPanel();
+ }
+}
+
+closeNPCPanel(){
+ if(npcPanel){
+  npcPanel.destroy(true);
+  npcPanel=null;
+ }
+
+ npcNameText=null;
+ npcPageText=null;
+ npcOpen=false;
+}
+  
  // MOBILE CONTROLS
  createMobileControls(){
   controlArea=this.add.rectangle(
@@ -4650,6 +4948,23 @@ questOpen=false;
    62,
    '▶'
   );
+   
+   const talkButton=this.createControlButton(
+ 300,
+ 475,
+ 70,
+ 34,
+ 'TALK'
+);
+
+talkButton.label.setFontSize(11);
+
+talkButton.on(
+ 'pointerdown',
+ ()=>{
+  talkPressed=true;
+ }
+);
 
   this.createSkillButton(
    'slash',

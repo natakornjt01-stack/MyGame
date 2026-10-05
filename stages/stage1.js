@@ -46,6 +46,11 @@ const stage1={
   {x:2550,index:3},
   {x:3300,index:4}
  ],
+  // NPC
+npcs:[
+ {id:'guide',x:450,y:350},
+ {id:'merchant',x:1850,y:350}
+],
  // EXIT
  exit:{x:3550,y:350},
  // BACKGROUND
