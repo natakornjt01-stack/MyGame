@@ -5,6 +5,14 @@ import stage2 from './stages/stage2.js';
 import Inventory from './inventory.js';
 import Equipment from './equipment.js';
 import Skills from './skills.js';
+import Quest from './quest.js';
+
+import Phaser from 'phaser';
+import stage1 from './stages/stage1.js';
+import stage2 from './stages/stage2.js';
+import Inventory from './inventory.js';
+import Equipment from './equipment.js';
+import Skills from './skills.js';
 
 // ERROR DETECTOR
 window.addEventListener('error',e=>{
@@ -45,6 +53,12 @@ const SKILL_PANEL_WIDTH=560;
 const SKILL_PANEL_HEIGHT=280;
 const SKILL_FRONT_DISTANCE=150;
 const SKILL_BURST_RADIUS=170;
+
+// QUEST
+let quest=null;
+let questOpen=false;
+let questPanel=null;
+let questTrackerText=null;
 
 // HP
 const PLAYER_MAX_HP=100;
@@ -309,12 +323,18 @@ class GameScene extends Phaser.Scene{
   }
 
   skills=new Skills();
+   // QUEST
+ quest=new Quest(data.quest);
 
   inventoryOpen=false;
   inventoryPanel=null;
 
   skillOpen=false;
   skillPanel=null;
+   // QUEST
+questOpen=false;
+questPanel=null;
+questTrackerText=null;
 
   leftPressed=false;
   rightPressed=false;
@@ -527,6 +547,10 @@ class GameScene extends Phaser.Scene{
   this.skill3Key=this.input.keyboard.addKey(
    Phaser.Input.Keyboard.KeyCodes.THREE
   );
+this.questKey=this.input.keyboard.addKey(
+ Phaser.Input.Keyboard.KeyCodes.Q
+);
+   
 
   this.cameras.main.startFollow(
    player,
@@ -554,6 +578,7 @@ class GameScene extends Phaser.Scene{
   this.createEXPUI();
   this.createCoinUI();
   this.createCheckpointUI();
+   this.createQuestUI();
   this.createMobileControls();
  }
 
@@ -577,6 +602,7 @@ class GameScene extends Phaser.Scene{
 
   this.updateCoins();
   this.updateMobileSkillButtons();
+   this.updateQuestUI();
 
   if(playerPowered&&!gameOver){
    const remaining=
@@ -605,6 +631,15 @@ class GameScene extends Phaser.Scene{
    this.toggleSkillPanel();
    return;
   }
+   // QUEST KEY
+if(
+ Phaser.Input.Keyboard.JustDown(
+  this.questKey
+ )
+){
+ this.toggleQuestPanel();
+ return;
+}
 
   if(
    Phaser.Input.Keyboard.JustDown(
@@ -637,7 +672,14 @@ class GameScene extends Phaser.Scene{
 
    return;
   }
-
+// QUEST PANEL
+if(questOpen){
+ player.body.setVelocity(0,0);
+ if(enemies)
+  enemies.setVelocity(0,0);
+ this.updateQuestPanel();
+ return;
+}
   if(inventoryOpen){
    player.body.setVelocity(0,0);
 
@@ -795,6 +837,9 @@ class GameScene extends Phaser.Scene{
   this.hideSkillPanel();
   skillOpen=false;
 
+  this.hideQuestPanel();
+questOpen=false;
+   
   this.add.text(
    GAME_WIDTH/2,
    GAME_HEIGHT/2-45,
@@ -848,26 +893,325 @@ class GameScene extends Phaser.Scene{
      currentStageNumber+1;
 
     this.scene.restart({
-     stage:nextStage,
-     keepProgress:true,
-     playerHP,
-     coinCount,
-     playerLevel,
-     playerEXP,
-     playerEXPRequired,
-     inventory:
-      inventory?
-      inventory.getData():
-      [],
-     equipment:
-      equipment?
-      equipment.getData():
-      []
-    });
+ stage:nextStage,
+ keepProgress:true,
+ playerHP,
+ coinCount,
+ playerLevel,
+ playerEXP,
+ playerEXPRequired,
+ inventory:
+  inventory?
+  inventory.getData():
+  [],
+ equipment:
+  equipment?
+  equipment.getData():
+  [],
+ quest:
+  quest?
+  quest.getData():
+  []
+});
    }
   );
  }
 
+// QUEST
+createQuestUI(){
+ this.add.rectangle(
+  665,
+  115,
+  250,
+  66,
+  0x111827,
+  .72
+ ).setScrollFactor(0)
+  .setDepth(100);
+
+ questTrackerText=this.add.text(
+  548,
+  87,
+  'QUEST',
+  {
+   fontFamily:'monospace',
+   fontSize:'11px',
+   fontStyle:'bold',
+   color:'#fbbf24',
+   stroke:'#000000',
+   strokeThickness:3
+  }
+ ).setScrollFactor(0)
+  .setDepth(102);
+
+ this.updateQuestUI();
+}
+
+updateQuestUI(){
+ if(!questTrackerText||!quest)return;
+
+ const q=quest.getActive();
+
+ if(!q){
+  questTrackerText.setText(
+   'QUEST\nALL QUESTS COMPLETE'
+  );
+  return;
+ }
+
+ questTrackerText.setText(
+  `QUEST\n${q.name}: ${q.progress}/${q.target}`
+ );
+}
+
+toggleQuestPanel(){
+ if(
+  gameOver||
+  stageTransitioning||
+  inventoryOpen||
+  skillOpen
+ )
+  return;
+
+ questOpen=!questOpen;
+
+ if(questOpen)
+  this.showQuestPanel();
+ else
+  this.hideQuestPanel();
+}
+
+showQuestPanel(){
+ if(questPanel||!quest)return;
+
+ questPanel=this.add.container(
+  GAME_WIDTH/2,
+  GAME_HEIGHT/2
+ ).setScrollFactor(0)
+  .setDepth(700);
+
+ const bg=this.add.rectangle(
+  0,
+  0,
+  620,
+  360,
+  0x111827,
+  .98
+ );
+
+ bg.setStrokeStyle(
+  4,
+  0xf59e0b,
+  1
+ );
+
+ questPanel.add(bg);
+
+ questPanel.add(
+  this.add.text(
+   0,
+   -145,
+   'QUESTS',
+   {
+    fontFamily:'monospace',
+    fontSize:'28px',
+    fontStyle:'bold',
+    color:'#fbbf24',
+    stroke:'#000000',
+    strokeThickness:4
+   }
+  ).setOrigin(.5)
+ );
+
+ const close=this.add.rectangle(
+  255,
+  -145,
+  70,
+  28,
+  0x334155,
+  1
+ );
+
+ close.setStrokeStyle(
+  2,
+  0xf59e0b,
+  1
+ );
+
+ close.setInteractive();
+
+ questPanel.add(close);
+
+ questPanel.add(
+  this.add.text(
+   255,
+   -145,
+   'CLOSE',
+   {
+    fontFamily:'monospace',
+    fontSize:'10px',
+    fontStyle:'bold',
+    color:'#fff'
+   }
+  ).setOrigin(.5)
+ );
+
+ close.on(
+  'pointerdown',
+  ()=>this.toggleQuestPanel()
+ );
+
+ quest.getAll().forEach(
+  (q,i)=>{
+   const y=-75+i*68;
+
+   const box=this.add.rectangle(
+    0,
+    y,
+    560,
+    55,
+    q.completed?
+    0x14532d:
+    0x1f2937,
+    1
+   );
+
+   box.setStrokeStyle(
+    2,
+    q.completed?
+    0x22c55e:
+    0x475569,
+    1
+   );
+
+   const text=this.add.text(
+    -250,
+    y-17,
+    `${q.completed?'✓':'○'} ${q.name}\n${q.description}`,
+    {
+     fontFamily:'monospace',
+     fontSize:'11px',
+     fontStyle:'bold',
+     color:'#fff',
+     lineSpacing:2
+    }
+   );
+
+   const progress=this.add.text(
+    240,
+    y,
+    q.completed?
+    'COMPLETE':
+    `${q.progress}/${q.target}`,
+    {
+     fontFamily:'monospace',
+     fontSize:'12px',
+     fontStyle:'bold',
+     color:q.completed?
+     '#86efac':
+     '#fbbf24'
+    }
+   ).setOrigin(1,.5);
+
+   const reward=this.add.text(
+    240,
+    y+17,
+    `+${q.reward.exp} EXP  +${q.reward.coin} COIN`,
+    {
+     fontFamily:'monospace',
+     fontSize:'8px',
+     color:'#cbd5e1'
+    }
+   ).setOrigin(1,.5);
+
+   questPanel.add([
+    box,
+    text,
+    progress,
+    reward
+   ]);
+  }
+ );
+
+ questPanel.add(
+  this.add.text(
+   0,
+   155,
+   'Q = QUEST MENU',
+   {
+    fontFamily:'monospace',
+    fontSize:'11px',
+    color:'#fff6a0'
+   }
+  ).setOrigin(.5)
+ );
+}
+
+updateQuestPanel(){
+ if(!questPanel)return;
+
+ this.hideQuestPanel();
+ this.showQuestPanel();
+}
+
+hideQuestPanel(){
+ if(questPanel){
+  questPanel.destroy(true);
+  questPanel=null;
+ }
+}
+
+handleQuestProgress(done=[]){
+ if(!quest||!done.length)return;
+
+ done.forEach(
+  id=>{
+   const reward=quest.getReward(id);
+
+   if(reward.coin){
+    coinCount+=reward.coin;
+    this.updateCoinUI();
+   }
+
+   if(reward.exp)
+    this.addEXP(reward.exp);
+
+   const q=quest.get(id);
+
+   if(q){
+    const text=this.add.text(
+     GAME_WIDTH/2,
+     150,
+     `QUEST COMPLETE!\n${q.name}\n+${reward.exp} EXP  +${reward.coin} COIN`,
+     {
+      fontFamily:'monospace',
+      fontSize:'16px',
+      fontStyle:'bold',
+      align:'center',
+      color:'#fbbf24',
+      stroke:'#000000',
+      strokeThickness:4
+     }
+    ).setOrigin(.5)
+     .setScrollFactor(0)
+     .setDepth(800);
+
+    this.tweens.add({
+     targets:text,
+     y:105,
+     alpha:0,
+     duration:1400,
+     ease:'Cubic.easeOut',
+     onComplete:()=>text.destroy()
+    });
+   }
+  }
+ );
+
+ this.updateQuestUI();
+}
+  
+  
  // SKILL
  toggleSkillPanel(){
   if(
@@ -2299,6 +2643,12 @@ class GameScene extends Phaser.Scene{
    .setDepth(102);
 
   this.updateCheckpointUI();
+   // QUEST CHECKPOINT
+this.handleQuestProgress(
+ quest?
+ quest.onCheckpoint():
+ []
+);
  }
 
  updateCheckpointUI(){
@@ -2925,6 +3275,12 @@ class GameScene extends Phaser.Scene{
    COIN_VALUE;
 
   coinCount+=value;
+   // QUEST COIN
+this.handleQuestProgress(
+ quest?
+ quest.onCoin(value):
+ []
+);
 
   this.updateCoinUI();
 
@@ -3438,6 +3794,13 @@ class GameScene extends Phaser.Scene{
    deathX,
    deathY
   );
+// QUEST KILL
+this.handleQuestProgress(
+ quest?
+ quest.onEnemyKill(enemy.enemyType):
+ []
+);
+   
 
   if(enemy.body)
    this.physics.world.disableBody(
@@ -3739,6 +4102,8 @@ class GameScene extends Phaser.Scene{
 
   gameOver=true;
 
+  this.hideQuestPanel();
+questOpen=false;
   this.hideInventory();
   inventoryOpen=false;
 
