@@ -80,6 +80,7 @@ let shop=null;
 let shopOpen=false;
 let shopPanel=null;
 let shopCoinText=null;
+let shopPointerHandler=null;
 
 // ENEMY
 const ENEMY_TYPES={
@@ -340,6 +341,7 @@ shop=new Shop();
 shopOpen=false;
 shopPanel=null;
 shopCoinText=null;
+shopPointerHandler=null;
    // QUEST
  quest=new Quest(data.quest);
 
@@ -1867,18 +1869,16 @@ handleQuestProgress(done=[]){
  }
 
  // INVENTORY
- toggleInventory(){
-  if(
-   gameOver||
-   stageTransitioning
-  )
-   return;
+toggleInventory(){
+ if(
+  gameOver||
+  stageTransitioning||
+  shopOpen
+ )
+  return;
 
-  if(skillOpen){
-   this.hideSkillPanel();
-   skillOpen=false;
-  }
-
+ if(skillOpen){
+   
   inventoryOpen=!inventoryOpen;
 
   if(inventoryOpen)
@@ -1887,7 +1887,8 @@ handleQuestProgress(done=[]){
    this.hideInventory();
  }
 
- showInventory(){
+ showInventory()
+ {
   if(
    inventoryPanel||
    !inventory
@@ -1901,13 +1902,13 @@ handleQuestProgress(done=[]){
    .setDepth(500);
 
   const bg=this.add.rectangle(
-   0,
-   0,
-   720,
-   390,
-   0x111827,
-   .98
-  );
+  0,
+  0,
+  760,
+  500,
+  0x111827,
+  .98
+);
 
   bg.setStrokeStyle(
    4,
@@ -1920,11 +1921,11 @@ handleQuestProgress(done=[]){
   inventoryPanel.add(
    this.add.text(
     0,
-    -170,
+    -215,
     'INVENTORY',
     {
      fontFamily:'monospace',
-     fontSize:'27px',
+     fontSize:'36px',
      fontStyle:'bold',
      color:'#7dd3fc',
      stroke:'#000000',
@@ -1935,12 +1936,12 @@ handleQuestProgress(done=[]){
 
   const close=this.add.rectangle(
    305,
-   -168,
-   75,
-   30,
-   0x334155,
-   1
-  );
+  -210,
+  120,
+  52,
+  0x334155,
+  1
+);
 
   close.setStrokeStyle(
    2,
@@ -1956,7 +1957,7 @@ handleQuestProgress(done=[]){
    'CLOSE',
    {
     fontFamily:'monospace',
-    fontSize:'11px',
+    fontSize:'15px',
     fontStyle:'bold',
     color:'#ffffff'
    }
@@ -1987,25 +1988,25 @@ handleQuestProgress(done=[]){
   );
 
   this.createEquipmentSlot(
-   -225,
-   -105,
-   'weapon',
-   'WEAPON'
-  );
+ -245,
+ -125,
+ 'weapon',
+ 'WEAPON'
+);
 
-  this.createEquipmentSlot(
-   0,
-   -105,
-   'armor',
-   'ARMOR'
-  );
+this.createEquipmentSlot(
+ 0,
+ -125,
+ 'armor',
+ 'ARMOR'
+);
 
-  this.createEquipmentSlot(
-   225,
-   -105,
-   'accessory',
-   'ACCESSORY'
-  );
+this.createEquipmentSlot(
+ 245,
+ -125,
+ 'accessory',
+ 'ACCESSORY'
+);
 
   const stats=equipment.getStats();
 
@@ -2029,12 +2030,12 @@ handleQuestProgress(done=[]){
    i++
   ){
    const x=
-    -300+
-    (i%5)*120;
+    -280+
+    (i%5)*140;
 
    const y=
-    -15+
-    Math.floor(i/5)*48;
+    -35+
+    Math.floor(i/5)*62;
 
    const item=
     inventory.getSlot(i);
@@ -2042,8 +2043,8 @@ handleQuestProgress(done=[]){
    const slot=this.add.rectangle(
     x,
     y,
-    105,
-    40,
+    125,
+    52,
     0x1f2937,
     1
    );
@@ -2064,7 +2065,7 @@ handleQuestProgress(done=[]){
     'EMPTY',
     {
      fontFamily:'monospace',
-     fontSize:'10px',
+     fontSize:'13px',
      color:item?
      '#ffffff':
      '#64748b'
@@ -2079,7 +2080,7 @@ handleQuestProgress(done=[]){
     '',
     {
      fontFamily:'monospace',
-     fontSize:'11px',
+     fontSize:'13px',
      fontStyle:'bold',
      color:'#fff6a0'
     }
@@ -2127,7 +2128,8 @@ handleQuestProgress(done=[]){
   y,
   type,
   label
- ){
+ )
+ {
   const item=
    equipment.get(type);
 
@@ -2135,7 +2137,7 @@ handleQuestProgress(done=[]){
    x,
    y,
    190,
-   42,
+   55,
    0x1f2937,
    1
   );
@@ -4968,60 +4970,60 @@ showShopPanel(){
  const bg=this.add.rectangle(
   0,
   0,
-  650,
-  390,
+  740,
+  500,
   0x111827,
   .98
  ).setStrokeStyle(
-  4,
+  5,
   0xf59e0b,
   1
  );
 
  const title=this.add.text(
   0,
-  -170,
+  -215,
   'SHOP',
   {
    fontFamily:'monospace',
-   fontSize:'30px',
+   fontSize:'36px',
    fontStyle:'bold',
    color:'#fbbf24',
    stroke:'#000000',
-   strokeThickness:4
+   strokeThickness:5
   }
  ).setOrigin(.5);
 
  shopCoinText=this.add.text(
-  -300,
-  -135,
+  -330,
+  -170,
   `COIN: ${coinCount}`,
   {
    fontFamily:'monospace',
-   fontSize:'13px',
+   fontSize:'17px',
    fontStyle:'bold',
    color:'#fff6a0',
    stroke:'#000000',
-   strokeThickness:3
+   strokeThickness:4
   }
  );
 
  const close=this.add.rectangle(
-  285,
-  -165,
-  70,
-  30,
+  305,
+  -210,
+  120,
+  52,
   0x334155,
   1
- ).setInteractive();
+ );
 
  const closeText=this.add.text(
-  285,
-  -165,
+  305,
+  -210,
   'CLOSE',
   {
    fontFamily:'monospace',
-   fontSize:'10px',
+   fontSize:'15px',
    fontStyle:'bold',
    color:'#ffffff'
   }
@@ -5035,20 +5037,15 @@ showShopPanel(){
   closeText
  ]);
 
- close.on(
-  'pointerdown',
-  ()=>this.closeShopPanel()
- );
-
  shop.getAll().forEach(
   (item,i)=>{
-   const y=-85+i*58;
+   const y=-115+i*78;
 
    const box=this.add.rectangle(
     0,
     y,
-    580,
-    48,
+    670,
+    62,
     0x1f2937,
     1
    ).setStrokeStyle(
@@ -5058,56 +5055,56 @@ showShopPanel(){
    );
 
    const name=this.add.text(
-    -265,
-    y-8,
+    -305,
+    y-10,
     item.name,
     {
      fontFamily:'monospace',
-     fontSize:'13px',
+     fontSize:'15px',
      fontStyle:'bold',
      color:'#ffffff'
     }
    );
 
    const desc=this.add.text(
-    -265,
-    y+10,
+    -305,
+    y+13,
     item.description,
     {
      fontFamily:'monospace',
-     fontSize:'9px',
+     fontSize:'11px',
      color:'#cbd5e1'
     }
    );
 
    const price=this.add.text(
-    95,
+    55,
     y,
     `COIN ${item.price}`,
     {
      fontFamily:'monospace',
-     fontSize:'11px',
+     fontSize:'13px',
      fontStyle:'bold',
      color:'#fff6a0'
     }
    ).setOrigin(0,.5);
 
    const buy=this.add.rectangle(
-    245,
+    275,
     y,
-    75,
-    30,
+    115,
+    48,
     0x16a34a,
     1
-   ).setInteractive();
+   );
 
    const buyText=this.add.text(
-    245,
+    275,
     y,
     'BUY',
     {
      fontFamily:'monospace',
-     fontSize:'10px',
+     fontSize:'15px',
      fontStyle:'bold',
      color:'#ffffff'
     }
@@ -5121,14 +5118,43 @@ showShopPanel(){
     buy,
     buyText
    ]);
-
-   buy.on(
-    'pointerdown',
-    ()=>this.buyShopItem(item)
-   );
   }
  );
+
+ shopPointerHandler=pointer=>{
+  const x=pointer.x-GAME_WIDTH/2;
+  const y=pointer.y-GAME_HEIGHT/2;
+
+  if(
+   x>245&&
+   x<365&&
+   y>-236&&
+   y<-184
+  ){
+   this.closeShopPanel();
+   return;
+  }
+
+  shop.getAll().forEach((item,i)=>{
+   const rowY=-115+i*78;
+
+   if(
+    x>215&&
+    x<335&&
+    y>rowY-24&&
+    y<rowY+24
+   )
+    this.buyShopItem(item);
+  });
+ };
+
+ this.input.on(
+  'pointerdown',
+  shopPointerHandler
+ );
 }
+
+ 
 
 buyShopItem(item){
  if(
@@ -5199,7 +5225,16 @@ showShopMessage(text,color){
  });
 }
 
+// SHOP
 closeShopPanel(){
+ if(shopPointerHandler){
+  this.input.off(
+   'pointerdown',
+   shopPointerHandler
+  );
+  shopPointerHandler=null;
+ }
+
  if(shopPanel){
   shopPanel.destroy(true);
   shopPanel=null;
@@ -5208,6 +5243,7 @@ closeShopPanel(){
  shopCoinText=null;
  shopOpen=false;
 }
+  
  // MOBILE CONTROLS
  createMobileControls(){
   controlArea=this.add.rectangle(
