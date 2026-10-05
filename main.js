@@ -7,6 +7,7 @@ import Equipment from './equipment.js';
 import Skills from './skills.js';
 import Quest from './quest.js';
 import NPC from './npc.js';
+import Shop from './shop.js';
 
 // ERROR DETECTOR
 window.addEventListener('error',e=>{
@@ -73,6 +74,12 @@ let npcTalkText=null;
 let npcNameText=null;
 let npcPageText=null;
 let talkPressed=false;
+
+// SHOP
+let shop=null;
+let shopOpen=false;
+let shopPanel=null;
+let shopCoinText=null;
 
 // ENEMY
 const ENEMY_TYPES={
@@ -327,6 +334,12 @@ class GameScene extends Phaser.Scene{
   }
 
   skills=new Skills();
+   
+   // SHOP
+shop=new Shop();
+shopOpen=false;
+shopPanel=null;
+shopCoinText=null;
    // QUEST
  quest=new Quest(data.quest);
 
@@ -685,12 +698,26 @@ if(
  this.talkToNPC();
 }
 
-if(npcOpen){
+// SHOP PANEL
+if(shopOpen){
  player.body.setVelocity(0,0);
+
  if(enemies)
   enemies.getChildren().forEach(e=>{
    if(e&&e.body)e.body.setVelocity(0,0);
   });
+
+ return;
+}
+
+if(npcOpen){
+ player.body.setVelocity(0,0);
+
+ if(enemies)
+  enemies.getChildren().forEach(e=>{
+   if(e&&e.body)e.body.setVelocity(0,0);
+  });
+
  return;
 }
    
@@ -1182,8 +1209,7 @@ showQuestPanel(){
 updateQuestPanel(){
  if(!questPanel)return;
 
- this.hideQuestPanel();
- this.showQuestPanel();
+
 }
 
 hideQuestPanel(){
@@ -4129,18 +4155,23 @@ this.handleQuestProgress(
  }
 
  // DEATH
- killPlayer(){
-  if(gameOver)return;
+killPlayer(){
+ if(gameOver)return;
 
-  gameOver=true;
+ gameOver=true;
 
-  this.hideQuestPanel();
-questOpen=false;
-  this.hideInventory();
-  inventoryOpen=false;
+ this.closeShopPanel();
+ shopOpen=false;
 
-  this.hideSkillPanel();
-  skillOpen=false;
+ this.hideQuestPanel();
+ questOpen=false;
+
+ this.hideInventory();
+ inventoryOpen=false;
+
+ this.hideSkillPanel();
+ skillOpen=false;
+  
 
   if(player.body){
    player.body.setVelocity(
@@ -4763,13 +4794,22 @@ updateNPCs(){
  }
 }
 
+// NPC SHOP
 talkToNPC(){
+ if(shopOpen)return;
+
  if(npcOpen){
   this.nextNPCDialogue();
   return;
  }
 
  if(!nearbyNPC)return;
+
+ if(nearbyNPC.id==='merchant'){
+  shopOpen=true;
+  this.showShopPanel();
+  return;
+ }
 
  nearbyNPC.reset();
  npcOpen=true;
@@ -4914,7 +4954,260 @@ closeNPCPanel(){
  npcPageText=null;
  npcOpen=false;
 }
-  
+
+  // SHOP
+showShopPanel(){
+ if(shopPanel||!shop)return;
+
+ shopPanel=this.add.container(
+  GAME_WIDTH/2,
+  GAME_HEIGHT/2
+ ).setScrollFactor(0)
+  .setDepth(800);
+
+ const bg=this.add.rectangle(
+  0,
+  0,
+  650,
+  390,
+  0x111827,
+  .98
+ ).setStrokeStyle(
+  4,
+  0xf59e0b,
+  1
+ );
+
+ const title=this.add.text(
+  0,
+  -170,
+  'SHOP',
+  {
+   fontFamily:'monospace',
+   fontSize:'30px',
+   fontStyle:'bold',
+   color:'#fbbf24',
+   stroke:'#000000',
+   strokeThickness:4
+  }
+ ).setOrigin(.5);
+
+ shopCoinText=this.add.text(
+  -300,
+  -135,
+  `COIN: ${coinCount}`,
+  {
+   fontFamily:'monospace',
+   fontSize:'13px',
+   fontStyle:'bold',
+   color:'#fff6a0',
+   stroke:'#000000',
+   strokeThickness:3
+  }
+ );
+
+ const close=this.add.rectangle(
+  285,
+  -165,
+  70,
+  30,
+  0x334155,
+  1
+ ).setInteractive();
+
+ const closeText=this.add.text(
+  285,
+  -165,
+  'CLOSE',
+  {
+   fontFamily:'monospace',
+   fontSize:'10px',
+   fontStyle:'bold',
+   color:'#ffffff'
+  }
+ ).setOrigin(.5);
+
+ shopPanel.add([
+  bg,
+  title,
+  shopCoinText,
+  close,
+  closeText
+ ]);
+
+ close.on(
+  'pointerdown',
+  ()=>this.closeShopPanel()
+ );
+
+ shop.getAll().forEach(
+  (item,i)=>{
+   const y=-85+i*58;
+
+   const box=this.add.rectangle(
+    0,
+    y,
+    580,
+    48,
+    0x1f2937,
+    1
+   ).setStrokeStyle(
+    2,
+    0x475569,
+    1
+   );
+
+   const name=this.add.text(
+    -265,
+    y-8,
+    item.name,
+    {
+     fontFamily:'monospace',
+     fontSize:'13px',
+     fontStyle:'bold',
+     color:'#ffffff'
+    }
+   );
+
+   const desc=this.add.text(
+    -265,
+    y+10,
+    item.description,
+    {
+     fontFamily:'monospace',
+     fontSize:'9px',
+     color:'#cbd5e1'
+    }
+   );
+
+   const price=this.add.text(
+    95,
+    y,
+    `COIN ${item.price}`,
+    {
+     fontFamily:'monospace',
+     fontSize:'11px',
+     fontStyle:'bold',
+     color:'#fff6a0'
+    }
+   ).setOrigin(0,.5);
+
+   const buy=this.add.rectangle(
+    245,
+    y,
+    75,
+    30,
+    0x16a34a,
+    1
+   ).setInteractive();
+
+   const buyText=this.add.text(
+    245,
+    y,
+    'BUY',
+    {
+     fontFamily:'monospace',
+     fontSize:'10px',
+     fontStyle:'bold',
+     color:'#ffffff'
+    }
+   ).setOrigin(.5);
+
+   shopPanel.add([
+    box,
+    name,
+    desc,
+    price,
+    buy,
+    buyText
+   ]);
+
+   buy.on(
+    'pointerdown',
+    ()=>this.buyShopItem(item)
+   );
+  }
+ );
+}
+
+buyShopItem(item){
+ if(
+  !item||
+  !inventory||
+  gameOver||
+  stageTransitioning
+ )
+  return;
+
+ if(coinCount<item.price){
+  this.showShopMessage(
+   'NOT ENOUGH COIN',
+   0xff5555
+  );
+  return;
+ }
+
+ if(!inventory.addItem(item.id,1)){
+  this.showShopMessage(
+   'INVENTORY FULL',
+   0xff5555
+  );
+  return;
+ }
+
+ coinCount-=item.price;
+
+ this.updateCoinUI();
+ this.updateShopUI();
+
+ this.showShopMessage(
+  `BOUGHT ${item.name}`,
+  0x86efac
+ );
+}
+
+updateShopUI(){
+ if(shopCoinText)
+  shopCoinText.setText(
+   `COIN: ${coinCount}`
+  );
+}
+
+showShopMessage(text,color){
+ const message=this.add.text(
+  GAME_WIDTH/2,
+  180,
+  text,
+  {
+   fontFamily:'monospace',
+   fontSize:'17px',
+   fontStyle:'bold',
+   color:'#ffffff',
+   stroke:'#000000',
+   strokeThickness:4
+  }
+ ).setOrigin(.5)
+  .setScrollFactor(0)
+  .setDepth(900);
+
+ this.tweens.add({
+  targets:message,
+  y:145,
+  alpha:0,
+  duration:700,
+  onComplete:()=>message.destroy()
+ });
+}
+
+closeShopPanel(){
+ if(shopPanel){
+  shopPanel.destroy(true);
+  shopPanel=null;
+ }
+
+ shopCoinText=null;
+ shopOpen=false;
+}
  // MOBILE CONTROLS
  createMobileControls(){
   controlArea=this.add.rectangle(
