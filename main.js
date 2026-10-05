@@ -248,6 +248,7 @@ let powerEndTime=0;
 let inventory=null;
 let inventoryOpen=false;
 let inventoryPanel=null;
+let inventoryRefreshTimer=null;
 
 // EQUIPMENT
 let equipment=null;
@@ -347,6 +348,7 @@ shopPointerHandler=null;
 
   inventoryOpen=false;
   inventoryPanel=null;
+  inventoryRefreshTimer=null;
 
   skillOpen=false;
   skillPanel=null;
@@ -1880,10 +1882,8 @@ toggleInventory(){
  inventoryOpen=!inventoryOpen;
 
  if(inventoryOpen){
-  this.input.setTopOnly(true);
   this.showInventory();
  }else{
-  this.input.setTopOnly(true);
   this.hideInventory();
  }
 }
@@ -1969,9 +1969,12 @@ toggleInventory(){
    closeText
   ]);
 
-  close.on(
-   'pointerdown',
-   ()=>this.toggleInventory()
+ close.on(
+   'pointerup',
+   (pointer, localX, localY, event)=>{
+    event?.stopPropagation();
+    this.toggleInventory();
+   }
   );
 
   inventoryPanel.add(
@@ -2094,8 +2097,9 @@ this.createEquipmentSlot(
    ]);
 
    slot.on(
-    'pointerdown',
-    ()=>{
+    'pointerup',
+    (pointer, localX, localY, event)=>{
+     event?.stopPropagation();
      const current=
       inventory.getSlot(i);
 
@@ -2187,8 +2191,9 @@ this.createEquipmentSlot(
   ]);
 
   slot.on(
-   'pointerdown',
-   ()=>{
+   'pointerup',
+   (pointer, localX, localY, event)=>{
+    event?.stopPropagation();
     if(!equipment.get(type))
      return;
 
@@ -2243,17 +2248,28 @@ this.createEquipmentSlot(
 
  // INVENTORY
 refreshInventory(){
- this.time.delayedCall(
-  50,
-  ()=>{
-   if(!inventoryOpen)return;
-   this.hideInventory();
-   this.showInventory();
-  }
- );
+ if(inventoryRefreshTimer){
+  inventoryRefreshTimer.remove(false);
+  inventoryRefreshTimer=null;
+ }
+
+ if(!inventoryOpen)return;
+
+ // Rebuild only after the current pointer event has finished.
+ inventoryRefreshTimer=this.time.delayedCall(0,()=>{
+  inventoryRefreshTimer=null;
+  if(!inventoryOpen)return;
+  this.hideInventory();
+  this.showInventory();
+ });
 }
 
  hideInventory(){
+  if(inventoryRefreshTimer){
+   inventoryRefreshTimer.remove(false);
+   inventoryRefreshTimer=null;
+  }
+
   if(inventoryPanel){
    inventoryPanel.destroy(true);
    inventoryPanel=null;
