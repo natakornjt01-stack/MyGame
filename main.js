@@ -189,6 +189,24 @@ const UI_TEXT_STROKE_WIDTH=4;
 // SAVE / LOAD
 const SAVE_KEY='mygame-save-v1';
 const SAVE_VERSION=1;
+const SETTINGS_KEY='mygame-settings-v1';
+
+function getGameSettings(){
+ try{
+  const data=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}');
+  return{
+   music:data.music!==false,
+   sound:data.sound!==false,
+   vibration:data.vibration!==false
+  };
+ }catch(error){
+  return{music:true,sound:true,vibration:true};
+ }
+}
+
+function saveGameSettings(settings){
+ localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));
+}
 
 // GLOBAL
 let player=null;
@@ -5731,6 +5749,285 @@ talkButton.on(
  }
 }
 
+// MAIN MENU
+class MainMenuScene extends Phaser.Scene{
+ constructor(){
+  super('MainMenuScene');
+ }
+
+ create(){
+  this.createBackground();
+
+  this.add.text(GAME_WIDTH/2,80,'MY GAME',{
+   fontFamily:'monospace',
+   fontSize:'58px',
+   fontStyle:'bold',
+   color:'#7dd3fc',
+   stroke:'#0f172a',
+   strokeThickness:8
+  }).setOrigin(.5);
+
+  this.add.text(GAME_WIDTH/2,145,'2D ACTION PLATFORMER RPG',{
+   fontFamily:'monospace',
+   fontSize:'16px',
+   fontStyle:'bold',
+   color:'#e2e8f0',
+   stroke:'#0f172a',
+   strokeThickness:3
+  }).setOrigin(.5);
+
+  const continueButton=this.createButton(
+   GAME_WIDTH/2,
+   235,
+   300,
+   58,
+   'CONTINUE',
+   0x2563eb
+  );
+
+  const newGameButton=this.createButton(
+   GAME_WIDTH/2,
+   305,
+   300,
+   58,
+   'NEW GAME',
+   0x16a34a
+  );
+
+  const settingsButton=this.createButton(
+   GAME_WIDTH/2,
+   375,
+   300,
+   58,
+   'SETTINGS',
+   0x475569
+  );
+
+  const continueAvailable=this.hasSave();
+  continueButton.setAlpha(continueAvailable?1:.4);
+  continueButton.label.setAlpha(continueAvailable?1:.55);
+  continueButton.input.enabled=continueAvailable;
+
+  continueButton.on('pointerup',()=>{
+   if(continueAvailable)this.continueGame();
+  });
+
+  newGameButton.on('pointerup',()=>this.startNewGame());
+  settingsButton.on('pointerup',()=>this.scene.start('SettingsScene'));
+
+  this.add.text(GAME_WIDTH/2,490,
+   continueAvailable?'F6 SAVE  •  F7 LOAD':'NO SAVE DATA',{
+    fontFamily:'monospace',
+    fontSize:'13px',
+    color:continueAvailable?'#86efac':'#94a3b8'
+   }).setOrigin(.5);
+
+  this.enterKey=this.input.keyboard.addKey(
+   Phaser.Input.Keyboard.KeyCodes.ENTER
+  );
+ }
+
+ update(){
+  if(this.enterKey&&Phaser.Input.Keyboard.JustDown(this.enterKey)){
+   if(this.hasSave())this.continueGame();
+   else this.startNewGame();
+  }
+ }
+
+ hasSave(){
+  try{
+   const data=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');
+   return !!data&&data.version===SAVE_VERSION&&[1,2].includes(Number(data.stage));
+  }catch(error){
+   return false;
+  }
+ }
+
+ continueGame(){
+  try{
+   const data=JSON.parse(localStorage.getItem(SAVE_KEY));
+   data.keepProgress=true;
+   this.scene.start('GameScene',data);
+  }catch(error){
+   localStorage.removeItem(SAVE_KEY);
+   this.scene.start('GameScene');
+  }
+ }
+
+ startNewGame(){
+  localStorage.removeItem(SAVE_KEY);
+  this.scene.start('GameScene');
+ }
+
+ createBackground(){
+  this.add.rectangle(400,300,800,600,0x0f172a);
+  this.add.circle(120,110,90,0x1d4ed8,.18);
+  this.add.circle(690,170,130,0x7c3aed,.16);
+  this.add.circle(410,560,210,0x0891b2,.12);
+
+  for(let i=0;i<12;i++){
+   const x=(i*137)%800;
+   const y=180+(i*83)%300;
+   this.add.circle(x,y,2+(i%3),0xffffff,.35);
+  }
+ }
+
+ createButton(x,y,width,height,text,color){
+  const button=this.add.rectangle(x,y,width,height,color,.9)
+   .setStrokeStyle(2,0x7dd3fc,.65)
+   .setInteractive({useHandCursor:false});
+
+  button.label=this.add.text(x,y,text,{
+   fontFamily:'monospace',
+   fontSize:'18px',
+   fontStyle:'bold',
+   color:'#ffffff',
+   stroke:'#000000',
+   strokeThickness:3
+  }).setOrigin(.5);
+
+  button.on('pointerdown',()=>button.setAlpha(.7));
+  button.on('pointerup',()=>button.setAlpha(1));
+  button.on('pointerupoutside',()=>button.setAlpha(1));
+  return button;
+ }
+}
+
+// SETTINGS
+class SettingsScene extends Phaser.Scene{
+ constructor(){
+  super('SettingsScene');
+ }
+
+ create(){
+  this.settings=getGameSettings();
+  this.createBackground();
+
+  this.add.text(GAME_WIDTH/2,70,'SETTINGS',{
+   fontFamily:'monospace',
+   fontSize:'42px',
+   fontStyle:'bold',
+   color:'#7dd3fc',
+   stroke:'#0f172a',
+   strokeThickness:6
+  }).setOrigin(.5);
+
+  this.musicButton=this.createToggle(250,'MUSIC',this.settings.music);
+  this.soundButton=this.createToggle(315,'SOUND FX',this.settings.sound);
+  this.vibrationButton=this.createToggle(380,'VIBRATION',this.settings.vibration);
+
+  this.updateToggle(this.musicButton,'MUSIC',this.settings.music);
+  this.updateToggle(this.soundButton,'SOUND FX',this.settings.sound);
+  this.updateToggle(this.vibrationButton,'VIBRATION',this.settings.vibration);
+
+  this.musicButton.on('pointerup',()=>{
+   this.settings.music=!this.settings.music;
+   this.updateToggle(this.musicButton,'MUSIC',this.settings.music);
+   this.persistSettings();
+  });
+
+  this.soundButton.on('pointerup',()=>{
+   this.settings.sound=!this.settings.sound;
+   this.updateToggle(this.soundButton,'SOUND FX',this.settings.sound);
+   this.persistSettings();
+  });
+
+  this.vibrationButton.on('pointerup',()=>{
+   this.settings.vibration=!this.settings.vibration;
+   this.updateToggle(this.vibrationButton,'VIBRATION',this.settings.vibration);
+   this.persistSettings();
+  });
+
+  const resetSave=this.createButton(
+   GAME_WIDTH/2,
+   455,
+   300,
+   48,
+   'DELETE SAVE DATA',
+   0x991b1b
+  );
+
+  resetSave.on('pointerup',()=>{
+   localStorage.removeItem(SAVE_KEY);
+   this.statusText.setText('SAVE DATA DELETED');
+  });
+
+  const back=this.createButton(
+   GAME_WIDTH/2,
+   520,
+   180,
+   42,
+   'BACK',
+   0x475569
+  );
+
+  back.on('pointerup',()=>this.scene.start('MainMenuScene'));
+
+  this.statusText=this.add.text(GAME_WIDTH/2,555,'SETTINGS SAVED',{
+   fontFamily:'monospace',
+   fontSize:'12px',
+   color:'#86efac'
+  }).setOrigin(.5);
+
+  this.escapeKey=this.input.keyboard.addKey(
+   Phaser.Input.Keyboard.KeyCodes.ESC
+  );
+ }
+
+ update(){
+  if(this.escapeKey&&Phaser.Input.Keyboard.JustDown(this.escapeKey)){
+   this.scene.start('MainMenuScene');
+  }
+ }
+
+ persistSettings(){
+  saveGameSettings(this.settings);
+  if(this.statusText)this.statusText.setText('SETTINGS SAVED');
+ }
+
+ createBackground(){
+  this.add.rectangle(400,300,800,600,0x0f172a);
+  this.add.circle(700,120,160,0x2563eb,.14);
+  this.add.circle(100,500,180,0x7c3aed,.12);
+ }
+
+ createToggle(y,label,enabled){
+  const button=this.add.rectangle(
+   GAME_WIDTH/2,
+   y,
+   360,
+   48,
+   0x1e293b,
+   1
+  ).setStrokeStyle(2,0x475569,1)
+   .setInteractive({useHandCursor:false});
+
+  button.label=label;
+  button.on('pointerdown',()=>button.setAlpha(.7));
+  button.on('pointerup',()=>button.setAlpha(1));
+  button.on('pointerupoutside',()=>button.setAlpha(1));
+  return button;
+ }
+
+ updateToggle(button,label,enabled){
+  button.setFillStyle(enabled?0x166534:0x334155,1);
+  button.setStrokeStyle(2,enabled?0x86efac:0x64748b,1);
+
+  if(button.text)button.text.destroy();
+  button.text=this.add.text(
+   GAME_WIDTH/2,
+   button.y,
+   `${label}: ${enabled?'ON':'OFF'}`,
+   {
+    fontFamily:'monospace',
+    fontSize:'16px',
+    fontStyle:'bold',
+    color:'#ffffff'
+   }
+  ).setOrigin(.5);
+ }
+}
+
 // PHASER CONFIG
 const config={
  type:Phaser.AUTO,
@@ -5750,8 +6047,8 @@ const config={
   mode:Phaser.Scale.FIT,
   autoCenter:Phaser.Scale.CENTER_BOTH
  },
- scene:GameScene
+ scene:[MainMenuScene,SettingsScene,GameScene]
 };
 
 // START
-new Phaser.Game(config);
+const game=new Phaser.Game(config);
