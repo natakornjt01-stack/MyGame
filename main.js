@@ -8,6 +8,7 @@ import Skills from './skills.js';
 import Quest from './quest.js';
 import NPC from './npc.js';
 import Shop from './shop.js';
+import AudioManager from './audio.js';
 
 // ERROR DETECTOR
 window.addEventListener('error',e=>{
@@ -208,6 +209,8 @@ function saveGameSettings(settings){
  localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));
 }
 
+const audio=new AudioManager();
+
 // GLOBAL
 let player=null;
 let playerVisual=null;
@@ -321,6 +324,9 @@ class GameScene extends Phaser.Scene{
 
  // CREATE
  create(data={}){
+  audio.startMusic();
+  this.input.on('pointerdown',()=>audio.unlock());
+
   const requestedStage=Number(data.stage||1);
 
   if(requestedStage===2){
@@ -874,6 +880,7 @@ if(questOpen){
    jumpPressed&&
    onGround
   ){
+   audio.play('jump');
    player.body.setVelocityY(
     -JUMP_POWER
    );
@@ -889,6 +896,7 @@ if(questOpen){
    )&&
    onGround
   ){
+   audio.play('jump');
    player.body.setVelocityY(
     -JUMP_POWER
    );
@@ -2778,6 +2786,7 @@ refreshInventory(){
   activeCheckpoint=index;
   checkpointX=checkpoint.checkpointX;
   checkpointY=checkpoint.checkpointY;
+  audio.play('checkpoint');
 
   checkpoints.getChildren().forEach(
    cp=>{
@@ -2937,6 +2946,7 @@ this.handleQuestProgress(
   );
 
   playerPowered=true;
+  audio.play('power');
 
   powerEndTime=
    Date.now()+
@@ -3534,6 +3544,7 @@ this.handleQuestProgress(
    COIN_VALUE;
 
   coinCount+=value;
+  audio.play('coin');
    // QUEST COIN
 this.handleQuestProgress(
  quest?
@@ -3934,6 +3945,8 @@ this.handleQuestProgress(
  }
 
  createAttackEffect(){
+  audio.play('attack');
+
   if(
    attackEffect&&
    attackEffect.active
@@ -4036,6 +4049,8 @@ this.handleQuestProgress(
 
   if(enemy.hp<=0)
    this.killEnemy(enemy);
+  else
+   audio.play('hit');
  }
 
  killEnemy(enemy){
@@ -4047,6 +4062,7 @@ this.handleQuestProgress(
 
   const deathX=enemy.x;
   const deathY=enemy.y;
+  audio.play('enemyDown');
 
   this.addEXP(
    enemy.expReward||50,
@@ -4177,6 +4193,7 @@ this.handleQuestProgress(
   }
 
   playerLevel++;
+  audio.play('levelup');
 
   playerEXPRequired+=
    PLAYER_EXP_INCREASE_PER_LEVEL;
@@ -4325,6 +4342,7 @@ this.handleQuestProgress(
    );
 
   playerHP-=damage;
+  audio.play('hit');
 
   playerHP=
    Math.max(
@@ -5601,6 +5619,11 @@ talkButton.on(
   );
 
   leftButton.on(
+   'pointercancel',
+   ()=>leftPressed=false
+  );
+
+  leftButton.on(
    'pointerout',
    ()=>leftPressed=false
   );
@@ -5617,6 +5640,11 @@ talkButton.on(
 
   rightButton.on(
    'pointerupoutside',
+   ()=>rightPressed=false
+  );
+
+  rightButton.on(
+   'pointercancel',
    ()=>rightPressed=false
   );
 
@@ -5645,6 +5673,11 @@ talkButton.on(
    ()=>powerPressed=false
   );
 
+  powerButton.on(
+   'pointercancel',
+   ()=>powerPressed=false
+  );
+
   jumpButton.on(
    'pointerdown',
    ()=>jumpPressed=true
@@ -5660,6 +5693,11 @@ talkButton.on(
    ()=>jumpPressed=false
   );
 
+  jumpButton.on(
+   'pointercancel',
+   ()=>jumpPressed=false
+  );
+
   attackButton.on(
    'pointerdown',
    ()=>attackPressed=true
@@ -5672,6 +5710,11 @@ talkButton.on(
 
   attackButton.on(
    'pointerupoutside',
+   ()=>attackPressed=false
+  );
+
+  attackButton.on(
+   'pointercancel',
    ()=>attackPressed=false
   );
  }
@@ -5756,6 +5799,9 @@ class MainMenuScene extends Phaser.Scene{
  }
 
  create(){
+  audio.startMusic();
+  this.input.on('pointerdown',()=>audio.unlock());
+
   this.createBackground();
 
   this.add.text(GAME_WIDTH/2,80,'MY GAME',{
@@ -5886,7 +5932,11 @@ class MainMenuScene extends Phaser.Scene{
    strokeThickness:3
   }).setOrigin(.5);
 
-  button.on('pointerdown',()=>button.setAlpha(.7));
+  button.on('pointerdown',()=>{
+   audio.unlock();
+   audio.play('click');
+   button.setAlpha(.7);
+  });
   button.on('pointerup',()=>button.setAlpha(1));
   button.on('pointerupoutside',()=>button.setAlpha(1));
   return button;
@@ -5922,12 +5972,14 @@ class SettingsScene extends Phaser.Scene{
 
   this.musicButton.on('pointerup',()=>{
    this.settings.music=!this.settings.music;
+   audio.setMusicEnabled(this.settings.music);
    this.updateToggle(this.musicButton,'MUSIC',this.settings.music);
    this.persistSettings();
   });
 
   this.soundButton.on('pointerup',()=>{
    this.settings.sound=!this.settings.sound;
+   audio.setSoundEnabled(this.settings.sound);
    this.updateToggle(this.soundButton,'SOUND FX',this.settings.sound);
    this.persistSettings();
   });
@@ -6003,7 +6055,11 @@ class SettingsScene extends Phaser.Scene{
    .setInteractive({useHandCursor:false});
 
   button.label=label;
-  button.on('pointerdown',()=>button.setAlpha(.7));
+  button.on('pointerdown',()=>{
+   audio.unlock();
+   audio.play('click');
+   button.setAlpha(.7);
+  });
   button.on('pointerup',()=>button.setAlpha(1));
   button.on('pointerupoutside',()=>button.setAlpha(1));
   return button;
