@@ -8,13 +8,14 @@ const stage1={
   {x:400,y:425,width:800,height:50},
   {x:1200,y:425,width:800,height:50},
   {x:2000,y:425,width:800,height:50},
-  {x:2800,y:425,width:800,height:50},
+  {x:3000,y:425,width:1500,height:50},
+   
   {x:550,y:330,width:180,height:25},
   {x:900,y:270,width:180,height:25},
   {x:1300,y:330,width:180,height:25},
-  {x:1700,y:270,width:180,height:25},
-  {x:2100,y:330,width:180,height:25},
-  {x:2450,y:280,width:180,height:25},
+  {x:1750,y:270,width:155,height:25},
+  {x:2100,y:320,width:180,height:25},
+  {x:2300,y:280,width:180,height:25},
   {x:2750,y:330,width:180,height:25},
   {x:3050,y:260,width:180,height:25},
   {x:3350,y:320,width:180,height:25}
@@ -48,8 +49,8 @@ const stage1={
  ],
   // NPC
 npcs:[
- {id:'guide',x:450,y:350},
- {id:'merchant',x:1850,y:350}
+ {id:'guide',x:250,y:400},
+ {id:'merchant',x:1850,y:400}
 ],
  // EXIT
  exit:{x:3550,y:350},

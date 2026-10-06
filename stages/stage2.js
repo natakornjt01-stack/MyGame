@@ -9,7 +9,8 @@ const stage2={
   {x:1200,y:425,width:800,height:50},
   {x:2000,y:425,width:800,height:50},
   {x:2800,y:425,width:800,height:50},
-  {x:3600,y:425,width:800,height:50},
+  {x:3600,y:425,width:1500,height:50},
+   
   {x:600,y:320,width:180,height:25},
   {x:950,y:250,width:180,height:25},
   {x:1350,y:300,width:180,height:25},
@@ -49,8 +50,8 @@ const stage2={
  ],
   // NPC
 npcs:[
- {id:'cave',x:450,y:350},
- {id:'merchant',x:2050,y:350}
+ {id:'cave',x:450,y:400},
+ {id:'merchant',x:2050,y:400}
 ],
   
  // EXIT

@@ -6071,7 +6071,7 @@ class MainMenuScene extends Phaser.Scene{
 
   this.createBackground();
 
-  this.add.text(GAME_WIDTH/2,80,'MY GAME',{
+  this.add.text(GAME_WIDTH/2,80,'MY เกมไงไอน้อง',{
    fontFamily:'monospace',
    fontSize:'58px',
    fontStyle:'bold',
