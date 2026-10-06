@@ -65,6 +65,7 @@ const PLAYER_INVULNERABLE_TIME=800;
 const PLAYER_POWER_MAX_HP=200;
 const PLAYER_POWER_BONUS_HP=100;
 const PLAYER_POWER_DURATION=10000;
+const PLAYER_POWER_COOLDOWN=20000;
 
 // NPC
 let npcObjects=[];
@@ -227,6 +228,7 @@ let jumpButton=null;
 let attackButton=null;
 let powerButton=null;
 let inventoryButton=null;
+let talkButton=null;
 let skillButtons={};
 let skillCooldownOverlays={};
 let controlArea=null;
@@ -269,6 +271,7 @@ let playerEXPRequired=PLAYER_START_EXP_REQUIRED;
 // POWER
 let playerPowered=false;
 let powerEndTime=0;
+let powerCooldownUntil=0;
 
 // INVENTORY
 let inventory=null;
@@ -360,10 +363,7 @@ class GameScene extends Phaser.Scene{
    playerEXPRequired=PLAYER_START_EXP_REQUIRED;
 
    inventory=new Inventory(20,[
-    {id:'potion',count:3},
-    {id:'wood_sword',count:1},
-    {id:'leather_armor',count:1},
-    {id:'lucky_ring',count:1}
+    {id:'potion',count:3}
    ]);
 
    equipment=new Equipment();
@@ -408,6 +408,7 @@ questTrackerText=null;
 
   playerPowered=false;
   powerEndTime=0;
+  powerCooldownUntil=0;
 
   activeCheckpoint=0;
   checkpointX=200;
@@ -718,6 +719,8 @@ this.questKey=this.input.keyboard.addKey(
     this.endPowerMode();
    else
     this.updatePowerUI();
+  }else if(!gameOver){
+   this.updatePowerUI();
   }
 
   if(
@@ -1033,6 +1036,7 @@ if(questOpen){
   settingsButton.on('pointerup',()=>{
    if(pausePanel)pausePanel.setVisible(false);
    this.scene.launch('SettingsScene',{fromGame:true});
+   this.scene.bringToTop('SettingsScene');
   });
   exitButton.on('pointerup',()=>{
    this.hidePauseMenu();
@@ -2120,23 +2124,22 @@ handleQuestProgress(done=[]){
    .setScrollFactor(0)
    .setDepth(101);
 
-  const cooldownOverlay=this.add.circle(
+  const cooldownOverlay=this.add.rectangle(
    x,
    y,
-   30,
+   68,
+   58,
    0x000000,
-   .82
+   .62
   ).setScrollFactor(0)
    .setDepth(102)
    .setVisible(false);
 
-  const cooldownRing=this.add.arc(
+  const cooldownRing=this.add.rectangle(
    x,
    y,
-   31,
-   -90,
-   270,
-   false,
+   68,
+   58,
    0x000000,
    0
   ).setScrollFactor(0)
@@ -2254,8 +2257,8 @@ handleQuestProgress(done=[]){
      button.cooldownNumber.setVisible(left>0);
 
      if(left>0){
-      button.cooldownRing.setStartAngle(-90);
-      button.cooldownRing.setEndAngle(-90+360*ratio);
+      button.cooldownRing.rotation=
+       (1-ratio)*Math.PI*2;
       button.cooldownNumber.setText(
        String(Math.ceil(left/1000))
       );
@@ -3163,7 +3166,8 @@ this.handleQuestProgress(
  activatePower(){
   if(
    gameOver||
-   playerPowered
+   playerPowered||
+   Date.now()<powerCooldownUntil
   )
    return;
 
@@ -3180,6 +3184,7 @@ this.handleQuestProgress(
 
   playerPowered=true;
   audio.play('power');
+  powerCooldownUntil=Date.now()+PLAYER_POWER_COOLDOWN;
 
   powerEndTime=
    Date.now()+
@@ -4956,10 +4961,31 @@ killPlayer(){
    return;
 
   if(!playerPowered){
-   powerBar.displayWidth=
-    POWER_FILL_WIDTH;
+   const cooldownRemaining=Math.max(
+    0,
+    powerCooldownUntil-Date.now()
+   );
+   const cooldownPercent=Phaser.Math.Clamp(
+    cooldownRemaining/PLAYER_POWER_COOLDOWN,
+    0,
+    1
+   );
 
-   powerText.setText('POWER');
+   powerBar.displayWidth=
+    POWER_FILL_WIDTH*(cooldownRemaining>0?
+     cooldownPercent:1);
+
+   powerText.setText(
+    cooldownRemaining>0?
+    `POWER CD ${Math.ceil(cooldownRemaining/1000)}s`:
+    'POWER READY'
+   );
+
+   if(powerButton){
+    powerButton.setAlpha(cooldownRemaining>0?.35:.65);
+    if(powerButton.label)
+     powerButton.label.setAlpha(cooldownRemaining>0?.45:1);
+   }
 
    powerText.x=POWER_UI_X;
    powerText.y=POWER_UI_Y;
@@ -5237,6 +5263,11 @@ updateNPCs(){
  });
 
  nearbyNPC=closest;
+
+ if(talkButton){
+  talkButton.setVisible(!!closest);
+  if(talkButton.label)talkButton.label.setVisible(!!closest);
+ }
 
  if(npcTalkText){
   npcTalkText.setText(
@@ -5748,7 +5779,7 @@ closeShopPanel(){
    '▶'
   );
    
-   const talkButton=this.createControlButton(
+   talkButton=this.createControlButton(
  300,
  475,
  70,
@@ -5757,6 +5788,8 @@ closeShopPanel(){
 );
 
 talkButton.label.setFontSize(11);
+talkButton.setVisible(false);
+talkButton.label.setVisible(false);
 
 talkButton.on(
  'pointerdown',
@@ -5826,44 +5859,14 @@ talkButton.on(
 
   inventoryButton.label.setFontSize(10);
 
-  const saveButton=this.createControlButton(
-   700,
-   430,
-   62,
-   30,
-   'SAVE'
-  );
-
-  saveButton.label.setFontSize(9);
-
-  const loadButton=this.createControlButton(
-   770,
-   430,
-   58,
-   30,
-   'LOAD'
-  );
-
-  loadButton.label.setFontSize(8);
-
   const menuButton=this.createControlButton(
-   630,
-   430,
-   62,
-   30,
-   'MENU'
+   765,
+   38,
+   44,
+   44,
+   '≡'
   );
-  menuButton.label.setFontSize(9);
-
-  saveButton.on(
-   'pointerdown',
-   ()=>this.saveGame()
-  );
-
-  loadButton.on(
-   'pointerdown',
-   ()=>this.loadGame()
-  );
+  menuButton.label.setFontSize(24);
 
   menuButton.on(
    'pointerdown',
@@ -6071,7 +6074,7 @@ class MainMenuScene extends Phaser.Scene{
 
   this.createBackground();
 
-  this.add.text(GAME_WIDTH/2,80,'MY เกมไงไอน้อง',{
+  this.add.text(GAME_WIDTH/2,80,'MY GAME',{
    fontFamily:'monospace',
    fontSize:'58px',
    fontStyle:'bold',
@@ -6169,7 +6172,11 @@ class MainMenuScene extends Phaser.Scene{
 
  startNewGame(){
   localStorage.removeItem(SAVE_KEY);
-  this.scene.start('GameScene');
+  this.scene.start('GameScene',{
+   stage:1,
+   keepProgress:false,
+   newGame:true
+  });
  }
 
  createBackground(){
