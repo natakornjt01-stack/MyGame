@@ -228,6 +228,7 @@ let attackButton=null;
 let powerButton=null;
 let inventoryButton=null;
 let skillButtons={};
+let skillCooldownOverlays={};
 let controlArea=null;
 
 // STAGE
@@ -276,6 +277,9 @@ let inventoryPanel=null;
 let inventoryRefreshTimer=null;
 let saveKey=null;
 let loadKey=null;
+let pauseKey=null;
+let pauseOpen=false;
+let pausePanel=null;
 
 // EQUIPMENT
 let equipment=null;
@@ -416,6 +420,9 @@ questTrackerText=null;
   }
 
   skillButtons={};
+  skillCooldownOverlays={};
+  pauseOpen=false;
+  pausePanel=null;
 
   this.input.addPointer(3);
 
@@ -624,6 +631,10 @@ this.questKey=this.input.keyboard.addKey(
   loadKey=this.input.keyboard.addKey(
    Phaser.Input.Keyboard.KeyCodes.F7
   );
+
+  pauseKey=this.input.keyboard.addKey(
+   Phaser.Input.Keyboard.KeyCodes.ESC
+  );
    
 
   this.cameras.main.startFollow(
@@ -668,6 +679,16 @@ this.questKey=this.input.keyboard.addKey(
 
   if(loadKey&&Phaser.Input.Keyboard.JustDown(loadKey)){
    this.loadGame();
+   return;
+  }
+
+  if(pauseKey&&Phaser.Input.Keyboard.JustDown(pauseKey)){
+   this.togglePauseMenu();
+   return;
+  }
+
+  if(pauseOpen){
+   if(player.body)player.body.setVelocity(0,0);
    return;
   }
 
@@ -931,6 +952,137 @@ if(questOpen){
    this.activatePower();
 
   this.updateEnemies();
+ }
+
+ // PAUSE MENU
+ togglePauseMenu(){
+  if(pauseOpen)this.hidePauseMenu();
+  else this.showPauseMenu();
+ }
+
+ showPauseMenu(){
+  if(pauseOpen)return;
+
+  pauseOpen=true;
+  this.physics.world.pause();
+
+  pausePanel=this.add.container(
+   GAME_WIDTH/2,
+   GAME_HEIGHT/2
+  ).setScrollFactor(0)
+   .setDepth(1200);
+
+  const shade=this.add.rectangle(
+   0,
+   0,
+   GAME_WIDTH,
+   GAME_HEIGHT,
+   0x020617,
+   .78
+  );
+  shade.setScrollFactor(0);
+  const panel=this.add.rectangle(
+   0,
+   0,
+   420,
+   500,
+   0x111827,
+   .99
+  ).setStrokeStyle(4,0x7dd3fc,1);
+  panel.setScrollFactor(0);
+
+  const title=this.add.text(0,-205,'PAUSED',{
+   fontFamily:'monospace',
+   fontSize:'34px',
+   fontStyle:'bold',
+   color:'#7dd3fc',
+   stroke:'#000000',
+   strokeThickness:5
+  }).setOrigin(.5);
+
+  title.setScrollFactor(0);
+
+  const continueButton=this.createPauseButton(0,-130,'CONTINUE',0x2563eb);
+  const saveButton=this.createPauseButton(0,-65,'SAVE GAME',0x166534);
+  const loadButton=this.createPauseButton(0,0,'LOAD GAME',0x7c3aed);
+  const settingsButton=this.createPauseButton(0,65,'SETTINGS',0x475569);
+  const exitButton=this.createPauseButton(0,145,'EXIT TO MAIN MENU',0x991b1b);
+
+  pausePanel.add([
+   shade,
+   panel,
+   title,
+   continueButton,
+   continueButton.label,
+   saveButton,
+   saveButton.label,
+   loadButton,
+   loadButton.label,
+   settingsButton,
+   settingsButton.label,
+   exitButton,
+   exitButton.label
+  ]);
+
+  continueButton.on('pointerup',()=>this.hidePauseMenu());
+  saveButton.on('pointerup',()=>this.saveGame());
+  loadButton.on('pointerup',()=>{
+   this.hidePauseMenu();
+   this.loadGame();
+  });
+  settingsButton.on('pointerup',()=>{
+   if(pausePanel)pausePanel.setVisible(false);
+   this.scene.launch('SettingsScene',{fromGame:true});
+  });
+  exitButton.on('pointerup',()=>{
+   this.hidePauseMenu();
+   this.scene.start('MainMenuScene');
+  });
+ }
+
+ hidePauseMenu(){
+  if(pausePanel){
+   pausePanel.destroy(true);
+   pausePanel=null;
+  }
+  pauseOpen=false;
+  if(this.physics&&this.physics.world)
+   this.physics.world.resume();
+ }
+
+ closeSettingsMenu(){
+  if(pausePanel)pausePanel.setVisible(true);
+ }
+
+ createPauseButton(x,y,text,color){
+  const button=this.add.rectangle(
+   x,
+   y,
+   300,
+   48,
+   color,
+   .95
+  ).setStrokeStyle(2,0x7dd3fc,.7)
+   .setInteractive({useHandCursor:false});
+  button.setScrollFactor(0);
+
+  button.label=this.add.text(x,y,text,{
+   fontFamily:'monospace',
+   fontSize:'15px',
+   fontStyle:'bold',
+   color:'#ffffff',
+   stroke:'#000000',
+   strokeThickness:3
+  }).setOrigin(.5);
+  button.label.setScrollFactor(0);
+
+  button.on('pointerdown',()=>{
+   audio.play('click');
+   button.setAlpha(.7);
+  });
+  button.on('pointerup',()=>button.setAlpha(.95));
+  button.on('pointerupoutside',()=>button.setAlpha(.95));
+  return button;
  }
 
  // SAVE / LOAD
@@ -1968,10 +2120,54 @@ handleQuestProgress(done=[]){
    .setScrollFactor(0)
    .setDepth(101);
 
+  const cooldownOverlay=this.add.circle(
+   x,
+   y,
+   30,
+   0x000000,
+   .82
+  ).setScrollFactor(0)
+   .setDepth(102)
+   .setVisible(false);
+
+  const cooldownRing=this.add.arc(
+   x,
+   y,
+   31,
+   -90,
+   270,
+   false,
+   0x000000,
+   0
+  ).setScrollFactor(0)
+   .setDepth(103)
+   .setVisible(false);
+  cooldownRing.setStrokeStyle(5,0xfca5a5,1);
+
+  const cooldownNumber=this.add.text(
+   x,
+   y,
+   '',
+   {
+    fontFamily:'monospace',
+    fontSize:'20px',
+    fontStyle:'bold',
+    color:'#ffffff',
+    stroke:'#000000',
+    strokeThickness:4
+   }
+  ).setOrigin(.5)
+   .setScrollFactor(0)
+   .setDepth(104)
+   .setVisible(false);
+
   button.skillId=id;
   button.cooldownText=cooldown;
   button.nameText=name;
   button.iconText=iconText;
+  button.cooldownOverlay=cooldownOverlay;
+  button.cooldownRing=cooldownRing;
+  button.cooldownNumber=cooldownNumber;
 
   skillButtons[id]=button;
 
@@ -2007,6 +2203,13 @@ handleQuestProgress(done=[]){
    }
   );
 
+  button.on(
+   'pointercancel',
+   ()=>button.setAlpha(
+    skills&&skills.getRemaining(id)>0?.4:.72
+   )
+  );
+
   return button;
  }
 
@@ -2027,6 +2230,10 @@ handleQuestProgress(done=[]){
       button.skillId
      );
 
+    const definition=skills.get(button.skillId);
+    const ratio=definition&&definition.cooldown>0?
+     Phaser.Math.Clamp(left/definition.cooldown,0,1):0;
+
     button.cooldownText.setText(
      left>0?
      (left/1000).toFixed(1)+'s':
@@ -2039,9 +2246,24 @@ handleQuestProgress(done=[]){
      '#7dd3fc'
     );
 
-    button.setAlpha(
-     left>0?.4:.72
-    );
+    button.setAlpha(left>0?.45:.72);
+
+    if(button.cooldownOverlay){
+     button.cooldownOverlay.setVisible(left>0);
+     button.cooldownRing.setVisible(left>0);
+     button.cooldownNumber.setVisible(left>0);
+
+     if(left>0){
+      button.cooldownRing.setStartAngle(-90);
+      button.cooldownRing.setEndAngle(-90+360*ratio);
+      button.cooldownNumber.setText(
+       String(Math.ceil(left/1000))
+      );
+     }
+    }
+
+    button.iconText.setAlpha(left>0?.08:1);
+    button.nameText.setAlpha(left>0?.15:1);
    }
   );
  }
@@ -2566,6 +2788,11 @@ refreshInventory(){
      )
       return;
 
+     if(coin.body.blocked.down){
+      coin.body.setVelocityX(0);
+      coin.body.setDragX(1800);
+     }
+
      this.updateCoinMagnet(
       coin
      );
@@ -2585,6 +2812,12 @@ refreshInventory(){
    !player||
    !player.active||
    coin.collected
+  )
+   return;
+
+  if(
+   coin.isDrop&&
+   Date.now()<(coin.magnetDelayUntil||0)
   )
    return;
 
@@ -3381,6 +3614,7 @@ this.handleQuestProgress(
   coin.collected=false;
   coin.magnetized=false;
   coin.isDrop=true;
+  coin.magnetDelayUntil=Date.now()+900;
 
   this.physics.add.existing(coin);
 
@@ -3394,9 +3628,9 @@ this.handleQuestProgress(
 
    coin.body.setAllowGravity(true);
    coin.body.setImmovable(false);
-   coin.body.setBounce(COIN_DROP_BOUNCE);
+   coin.body.setBounce(.05);
    coin.body.setCollideWorldBounds(true);
-   coin.body.setDragX(COIN_DROP_DRAG_X);
+   coin.body.setDragX(1400);
    coin.body.setMaxVelocity(600,700);
   }
 
@@ -5059,6 +5293,8 @@ showNPCPanel(){
   1
  );
 
+ bg.setScrollFactor(0);
+
  npcNameText=this.add.text(
   -270,
   -90,
@@ -5085,8 +5321,11 @@ showNPCPanel(){
     width:520
    },
    lineSpacing:8
-  }
- );
+   }
+  );
+
+ npcNameText.setScrollFactor(0);
+ npcPageText.setScrollFactor(0);
 
  const next=this.add.rectangle(
   190,
@@ -5096,6 +5335,8 @@ showNPCPanel(){
   0x2563eb,
   1
  ).setInteractive();
+
+ next.setScrollFactor(0);
 
  const nextText=this.add.text(
   190,
@@ -5109,6 +5350,8 @@ showNPCPanel(){
   }
  ).setOrigin(.5);
 
+ nextText.setScrollFactor(0);
+
  const close=this.add.rectangle(
   260,
   -100,
@@ -5117,6 +5360,8 @@ showNPCPanel(){
   0x334155,
   1
  ).setInteractive();
+
+ close.setScrollFactor(0);
 
  const closeText=this.add.text(
   260,
@@ -5130,6 +5375,8 @@ showNPCPanel(){
   }
  ).setOrigin(.5);
 
+ closeText.setScrollFactor(0);
+
  npcPanel.add([
   bg,
   npcNameText,
@@ -5141,13 +5388,19 @@ showNPCPanel(){
  ]);
 
  next.on(
-  'pointerdown',
-  ()=>this.nextNPCDialogue()
+  'pointerup',
+  (pointer,localX,localY,event)=>{
+   event?.stopPropagation();
+   this.nextNPCDialogue();
+  }
  );
 
  close.on(
-  'pointerdown',
-  ()=>this.closeNPCPanel()
+  'pointerup',
+  (pointer,localX,localY,event)=>{
+   event?.stopPropagation();
+   this.closeNPCPanel();
+  }
  );
 }
 
@@ -5593,6 +5846,15 @@ talkButton.on(
 
   loadButton.label.setFontSize(8);
 
+  const menuButton=this.createControlButton(
+   630,
+   430,
+   62,
+   30,
+   'MENU'
+  );
+  menuButton.label.setFontSize(9);
+
   saveButton.on(
    'pointerdown',
    ()=>this.saveGame()
@@ -5601,6 +5863,11 @@ talkButton.on(
   loadButton.on(
    'pointerdown',
    ()=>this.loadGame()
+  );
+
+  menuButton.on(
+   'pointerdown',
+   ()=>this.togglePauseMenu()
   );
 
   leftButton.on(
@@ -5949,7 +6216,8 @@ class SettingsScene extends Phaser.Scene{
   super('SettingsScene');
  }
 
- create(){
+ create(data={}){
+  this.fromGame=!!data.fromGame;
   this.settings=getGameSettings();
   this.createBackground();
 
@@ -6013,7 +6281,15 @@ class SettingsScene extends Phaser.Scene{
    0x475569
   );
 
-  back.on('pointerup',()=>this.scene.start('MainMenuScene'));
+  back.on('pointerup',()=>{
+   if(this.fromGame){
+    this.scene.stop();
+    const gameScene=this.scene.get('GameScene');
+    if(gameScene)gameScene.closeSettingsMenu();
+   }else{
+    this.scene.start('MainMenuScene');
+   }
+  });
 
   this.statusText=this.add.text(GAME_WIDTH/2,555,'SETTINGS SAVED',{
    fontFamily:'monospace',
@@ -6028,13 +6304,43 @@ class SettingsScene extends Phaser.Scene{
 
  update(){
   if(this.escapeKey&&Phaser.Input.Keyboard.JustDown(this.escapeKey)){
-   this.scene.start('MainMenuScene');
+   if(this.fromGame){
+    this.scene.stop();
+    const gameScene=this.scene.get('GameScene');
+    if(gameScene)gameScene.closeSettingsMenu();
+   }else{
+    this.scene.start('MainMenuScene');
+   }
   }
  }
 
  persistSettings(){
   saveGameSettings(this.settings);
   if(this.statusText)this.statusText.setText('SETTINGS SAVED');
+ }
+
+ createButton(x,y,width,height,text,color){
+  const button=this.add.rectangle(x,y,width,height,color,.9)
+   .setStrokeStyle(2,0x7dd3fc,.65)
+   .setInteractive({useHandCursor:false});
+
+  button.label=this.add.text(x,y,text,{
+   fontFamily:'monospace',
+   fontSize:'15px',
+   fontStyle:'bold',
+   color:'#ffffff',
+   stroke:'#000000',
+   strokeThickness:3
+  }).setOrigin(.5);
+
+  button.on('pointerdown',()=>{
+   audio.unlock();
+   audio.play('click');
+   button.setAlpha(.7);
+  });
+  button.on('pointerup',()=>button.setAlpha(.9));
+  button.on('pointerupoutside',()=>button.setAlpha(.9));
+  return button;
  }
 
  createBackground(){
