@@ -5,10 +5,10 @@ const stage1={
  worldWidth:3600,
  worldHeight:450,
  platforms:[
-  {x:400,y:425,width:800,height:50},
-  {x:1200,y:425,width:800,height:50},
-  {x:2000,y:425,width:800,height:50},
-  {x:3000,y:425,width:1500,height:50},
+  {x:400,y:450,width:800,height:50},
+  {x:1200,y:450,width:800,height:50},
+  {x:2000,y:450,width:800,height:50},
+  {x:3000,y:450,width:1500,height:50},
    
   {x:550,y:330,width:180,height:25},
   {x:900,y:270,width:180,height:25},

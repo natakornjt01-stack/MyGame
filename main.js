@@ -313,21 +313,25 @@ class GameScene extends Phaser.Scene{
  }
 
  // PRELOAD
- preload(){
-  this.load.image('idle1','/idle1.png');
-  this.load.image('idle2','/idle2.png');
-  this.load.image('idle3','/idle3.png');
-  this.load.image('idle4','/idle4.png');
+preload(){
+ this.load.image('idle1','/idle1.png');
+ this.load.image('idle2','/idle2.png');
+ this.load.image('idle3','/idle3.png');
+ this.load.image('idle4','/idle4.png');
 
-  this.load.image('walk1','/walk1.png');
-  this.load.image('walk2','/walk2.png');
-  this.load.image('walk3','/walk3.png');
-  this.load.image('walk4','/walk4.png');
-  this.load.image('walk5','/walk5.png');
-  this.load.image('walk6','/walk6.png');
+ this.load.image('walk1','/walk1.png');
+ this.load.image('walk2','/walk2.png');
+ this.load.image('walk3','/walk3.png');
+ this.load.image('walk4','/walk4.png');
+ this.load.image('walk5','/walk5.png');
+ this.load.image('walk6','/walk6.png');
 
-  this.load.image('power','/power.png');
- }
+ this.load.image('power','/power.png');
+
+ this.load.image('bgSky','/backgrounds/sky.png');
+ this.load.image('bgMountain','/backgrounds/mountain.png');
+ this.load.image('bgForest','/backgrounds/forest_ground.png');
+}
 
  // CREATE
  create(data={}){
@@ -3411,57 +3415,31 @@ this.handleQuestProgress(
  }
 
  // BACKGROUND
- createForestBackground(){
-  this.add.rectangle(
-   currentStage.worldWidth/2,
-   GAME_HEIGHT/2,
-   currentStage.worldWidth,
-   GAME_HEIGHT,
-   0x87CEEB
-  ).setDepth(-20);
+createForestBackground(){
+ const w=currentStage.worldWidth;
+ const h=450;
 
-  this.add.circle(
-   350,
-   90,
-   45,
-   0xffd83d
-  ).setDepth(-10);
+ const sky=this.add.image(
+  w/2,
+  h/2,
+  'bgSky'
+ ).setDisplaySize(w,h)
+  .setDepth(-30);
 
-  const trees=
-   currentStage.treePositions||
-   [];
+ const mountain=this.add.image(
+  w/2,
+  h/2,
+  'bgMountain'
+ ).setDisplaySize(w,h)
+  .setDepth(-20);
 
-  trees.forEach(x=>{
-   this.add.rectangle(
-    x,
-    370,
-    30,
-    80,
-    0x7b3f12
-   ).setDepth(-5);
-
-   this.add.circle(
-    x,
-    310,
-    55,
-    0x238b23
-   ).setDepth(-6);
-
-   this.add.circle(
-    x-35,
-    330,
-    38,
-    0x2f8f4e
-   ).setDepth(-6);
-
-   this.add.circle(
-    x+35,
-    330,
-    38,
-    0x2f8f4e
-   ).setDepth(-6);
-  });
- }
+ const forest=this.add.image(
+  w/2,
+  h/2,
+  'bgForest'
+ ).setDisplaySize(w,h)
+  .setDepth(-10);
+}
 
  // COINS
  createCoins(){
