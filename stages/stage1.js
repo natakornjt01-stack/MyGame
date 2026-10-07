@@ -3,7 +3,7 @@ const stage1={
  id:1,
  name:'Forest',
  worldWidth:3600,
- worldHeight:450,
+ worldHeight:600,
  platforms:[
   {x:400,y:450,width:800,height:50},
   {x:1200,y:450,width:800,height:50},

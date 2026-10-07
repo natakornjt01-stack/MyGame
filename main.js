@@ -3414,26 +3414,26 @@ this.handleQuestProgress(
   return platform;
  }
 
- // BACKGROUND
+// BACKGROUND
 createForestBackground(){
  const w=currentStage.worldWidth;
- const h=450;
+ const h=600;
 
- const sky=this.add.image(
+ this.add.image(
   w/2,
   h/2,
   'bgSky'
  ).setDisplaySize(w,h)
   .setDepth(-30);
 
- const mountain=this.add.image(
+ this.add.image(
   w/2,
   h/2,
   'bgMountain'
  ).setDisplaySize(w,h)
   .setDepth(-20);
 
- const forest=this.add.image(
+ this.add.image(
   w/2,
   h/2,
   'bgForest'
