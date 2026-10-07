@@ -676,13 +676,7 @@ this.questKey=this.input.keyboard.addKey(
  // UPDATE
  update(){
   if(!player||!player.body)return;
-   
-if(this.backgroundLayers){
- const c=this.cameras.main;
- this.backgroundLayers.sky.tilePositionX=c.scrollX*.15;
- this.backgroundLayers.mountain.tilePositionX=c.scrollX*.4;
-}
-   
+
   if(saveKey&&Phaser.Input.Keyboard.JustDown(saveKey)){
    this.saveGame();
    return;
@@ -750,7 +744,6 @@ if(this.backgroundLayers){
    this.toggleSkillPanel();
    return;
   }
-   
    // QUEST KEY
 if(
  Phaser.Input.Keyboard.JustDown(
@@ -3421,62 +3414,33 @@ this.handleQuestProgress(
   return platform;
  }
 
-//BACKGROUND
+// BACKGROUND
 createForestBackground(){
- const w=GAME_WIDTH;
- const SKY_H=225;
- const MOUNTAIN_H=225;
- const SKY_Y=112.5;
- const MOUNTAIN_Y=337.5;
+ const w=currentStage.worldWidth;
+ const h=600;
 
- this.add.rectangle(
+ this.add.image(
   w/2,
-  GAME_HEIGHT/2,
-  w,
-  GAME_HEIGHT,
-  0x87ceeb
- ).setScrollFactor(0).setDepth(-40);
-
- const sky=this.add.tileSprite(
-  w/2,
-  SKY_Y,
-  w,
-  SKY_H,
+  h/2,
   'bgSky'
- ).setTileScale(1.5,1.5)
-  .setScrollFactor(0)
+ ).setDisplaySize(w,h)
   .setDepth(-30);
 
- const mountain=this.add.tileSprite(
+ this.add.image(
   w/2,
-  MOUNTAIN_Y,
-  w,
-  MOUNTAIN_H,
+  h/2,
   'bgMountain'
- ).setTileScale(1.5,1.5)
-  .setScrollFactor(0)
+ ).setDisplaySize(w,h)
   .setDepth(-20);
 
- const forest=this.add.image(
-  currentStage.worldWidth/2,
-  450,
+ this.add.image(
+  w/2,
+  h/2,
   'bgForest'
- ).setDepth(-10);
-
- const s=this.textures.get('bgForest').getSourceImage();
-
- forest.setDisplaySize(
-  currentStage.worldWidth,
-  s.height*(currentStage.worldWidth/s.width)
- );
-
- this.backgroundLayers={
-  sky,
-  mountain,
-  forest
- };
+ ).setDisplaySize(w,h)
+  .setDepth(-10);
 }
-  
+
  // COINS
  createCoins(){
   if(
