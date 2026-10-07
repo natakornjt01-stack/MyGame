@@ -3424,29 +3424,59 @@ this.handleQuestProgress(
 //BACKGROUND
 createForestBackground(){
  const w=GAME_WIDTH;
- const h=GAME_HEIGHT;
+ const SKY_H=225;
+ const MOUNTAIN_H=225;
+ const SKY_Y=112.5;
+ const MOUNTAIN_Y=337.5;
+
+ this.add.rectangle(
+  w/2,
+  GAME_HEIGHT/2,
+  w,
+  GAME_HEIGHT,
+  0x87ceeb
+ ).setScrollFactor(0).setDepth(-40);
+
  const sky=this.add.tileSprite(
-  w/2,h/2,w,h,'bgSky'
- ).setDepth(-30);
+  w/2,
+  SKY_Y,
+  w,
+  SKY_H,
+  'bgSky'
+ ).setTileScale(1.5,1.5)
+  .setScrollFactor(0)
+  .setDepth(-30);
+
  const mountain=this.add.tileSprite(
-  w/2,h/2,w,h,'bgMountain'
- ).setDepth(-20);
+  w/2,
+  MOUNTAIN_Y,
+  w,
+  MOUNTAIN_H,
+  'bgMountain'
+ ).setTileScale(1.5,1.5)
+  .setScrollFactor(0)
+  .setDepth(-20);
+
  const forest=this.add.image(
   currentStage.worldWidth/2,
   450,
   'bgForest'
  ).setDepth(-10);
+
  const s=this.textures.get('bgForest').getSourceImage();
+
  forest.setDisplaySize(
   currentStage.worldWidth,
   s.height*(currentStage.worldWidth/s.width)
  );
+
  this.backgroundLayers={
   sky,
   mountain,
   forest
  };
 }
+  
  // COINS
  createCoins(){
   if(
