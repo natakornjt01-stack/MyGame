@@ -676,7 +676,19 @@ this.questKey=this.input.keyboard.addKey(
  // UPDATE
  update(){
   if(!player||!player.body)return;
-
+   
+if(this.backgroundLayers){
+  const camera=this.cameras.main;
+  this.backgroundLayers.forEach(layer=>{
+   layer.img.x=
+    camera.scrollX+
+    GAME_WIDTH/2+
+    camera.scrollX*(1-layer.factor)*-1;
+   layer.img.y=
+    camera.scrollY+
+    GAME_HEIGHT/2;
+  });
+}
   if(saveKey&&Phaser.Input.Keyboard.JustDown(saveKey)){
    this.saveGame();
    return;
@@ -744,6 +756,7 @@ this.questKey=this.input.keyboard.addKey(
    this.toggleSkillPanel();
    return;
   }
+   
    // QUEST KEY
 if(
  Phaser.Input.Keyboard.JustDown(
@@ -3414,31 +3427,27 @@ this.handleQuestProgress(
   return platform;
  }
 
-// BACKGROUND
+//BACKGROUND
 createForestBackground(){
- const w=currentStage.worldWidth;
- const h=600;
-
- this.add.image(
-  w/2,
-  h/2,
-  'bgSky'
- ).setDisplaySize(w,h)
-  .setDepth(-30);
-
- this.add.image(
-  w/2,
-  h/2,
-  'bgMountain'
- ).setDisplaySize(w,h)
-  .setDepth(-20);
-
- this.add.image(
-  w/2,
-  h/2,
-  'bgForest'
- ).setDisplaySize(w,h)
-  .setDepth(-10);
+ const w=GAME_WIDTH;
+ const h=GAME_HEIGHT;
+ const layers=[
+  ['bgSky',.15,-30],
+  ['bgMountain',.4,-20],
+  ['bgForest',.7,-10]
+ ];
+ this.backgroundLayers=layers.map(([key,factor,depth])=>{
+  const img=this.add.image(w/2,h/2,key);
+  const src=this.textures.get(key).getSourceImage();
+  const scale=Math.max(w/src.width,h/src.height);
+  img.setDisplaySize(
+   src.width*scale,
+   src.height*scale
+  );
+  img.setScrollFactor(1,1);
+  img.setDepth(depth);
+  return{img,factor};
+ });
 }
 
  // COINS
