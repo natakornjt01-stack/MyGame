@@ -3,7 +3,7 @@ const stage2={
  id:2,
  name:'Cave',
  worldWidth:4200,
- worldHeight:450,
+ worldHeight:750,
  platforms:[
   {x:400,y:450,width:800,height:50},
   {x:1200,y:450,width:800,height:50},
