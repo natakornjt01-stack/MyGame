@@ -34,7 +34,7 @@ const POWER_PLAYER_WIDTH=105;
 const POWER_PLAYER_HEIGHT=125;
 const HITBOX_WIDTH=44;
 const HITBOX_HEIGHT=80;
-const GROUND_Y=450;
+const GROUND_Y=400;
 const PLAYER_SPEED=200;
 const JUMP_POWER=360;
 
@@ -313,25 +313,24 @@ class GameScene extends Phaser.Scene{
  }
 
  // PRELOAD
-preload(){
- this.load.image('idle1','/idle1.png');
- this.load.image('idle2','/idle2.png');
- this.load.image('idle3','/idle3.png');
- this.load.image('idle4','/idle4.png');
+ preload(){
+  this.load.image('idle1','/idle1.png');
+  this.load.image('idle2','/idle2.png');
+  this.load.image('idle3','/idle3.png');
+  this.load.image('idle4','/idle4.png');
 
- this.load.image('walk1','/walk1.png');
- this.load.image('walk2','/walk2.png');
- this.load.image('walk3','/walk3.png');
- this.load.image('walk4','/walk4.png');
- this.load.image('walk5','/walk5.png');
- this.load.image('walk6','/walk6.png');
+  this.load.image('walk1','/walk1.png');
+  this.load.image('walk2','/walk2.png');
+  this.load.image('walk3','/walk3.png');
+  this.load.image('walk4','/walk4.png');
+  this.load.image('walk5','/walk5.png');
+  this.load.image('walk6','/walk6.png');
 
- this.load.image('power','/power.png');
-
- this.load.image('bgSky','/backgrounds/sky.png');
- this.load.image('bgMountain','/backgrounds/mountain.png');
- this.load.image('bgForest','/backgrounds/forest_ground.png');
-}
+  this.load.image('power','/power.png');
+  this.load.image('bgSky','/backgrounds/sky.png');
+  this.load.image('bgMountain','/backgrounds/mountain.png');
+  this.load.image('bgForest','/backgrounds/forest_ground.png');
+ }
 
  // CREATE
  create(data={}){
@@ -3414,32 +3413,46 @@ this.handleQuestProgress(
   return platform;
  }
 
-// BACKGROUND
-createForestBackground(){
- const w=currentStage.worldWidth;
- const h=600;
+ // BACKGROUND
+ createForestBackground(){
+  const worldWidth=currentStage.worldWidth;
+  const worldHeight=currentStage.worldHeight||750;
+  const parallaxPadding=GAME_WIDTH*4;
+  const imageWidth=worldWidth+parallaxPadding*2;
 
- this.add.image(
-  w/2,
-  h/2,
-  'bgSky'
- ).setDisplaySize(w,h)
-  .setDepth(-30);
+  // ท้องฟ้า: ภาพกว้างกว่าด่านและเลื่อนช้ามาก
+  this.add.image(
+   worldWidth/2,
+   worldHeight/2,
+   'bgSky'
+  ).setDisplaySize(
+   imageWidth,
+   worldHeight
+  ).setScrollFactor(.08)
+   .setDepth(-40);
 
- this.add.image(
-  w/2,
-  h/2,
-  'bgMountain'
- ).setDisplaySize(w,h)
-  .setDepth(-20);
+  // ภูเขา: ภาพโปร่งใส เลื่อนด้วยความเร็วปานกลาง
+  this.add.image(
+   worldWidth/2,
+   worldHeight-115,
+   'bgMountain'
+  ).setDisplaySize(
+   imageWidth,
+   150
+  ).setScrollFactor(.3)
+   .setDepth(-30);
 
- this.add.image(
-  w/2,
-  h/2,
-  'bgForest'
- ).setDisplaySize(w,h)
-  .setDepth(-10);
-}
+  // พื้นป่า/ถนน: ติดกับโลกเกม ไม่เลื่อนแบบ Parallax
+  this.add.image(
+   worldWidth/2,
+   525,
+   'bgForest'
+  ).setDisplaySize(
+   imageWidth,
+   150
+  ).setScrollFactor(1)
+   .setDepth(-10);
+ }
 
  // COINS
  createCoins(){
