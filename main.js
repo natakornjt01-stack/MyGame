@@ -680,17 +680,7 @@ this.questKey=this.input.keyboard.addKey(
  // UPDATE
  update(){
   if(!player||!player.body)return;
-if(this.backgroundLayers){
-  const camera=this.cameras.main;
-  this.backgroundLayers.forEach(layer=>{
-   layer.img.x=
-    GAME_WIDTH/2+
-    camera.scrollX*(1-layer.factor);
-   layer.img.y=
-    GAME_HEIGHT/2+
-    camera.scrollY;
-  });
-}
+
   if(saveKey&&Phaser.Input.Keyboard.JustDown(saveKey)){
    this.saveGame();
    return;
@@ -3432,7 +3422,7 @@ this.handleQuestProgress(
 // BACKGROUND
 createForestBackground(){
  const w=currentStage.worldWidth;
- const baseY=337.5;
+ const baseY=300;
 
  const sky=this.add.image(w/2,baseY,'bgSky');
  const mountain=this.add.image(w/2,baseY,'bgMountain');
