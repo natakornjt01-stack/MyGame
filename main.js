@@ -233,6 +233,10 @@ let skillButtons={};
 let skillCooldownOverlays={};
 let controlArea=null;
 
+let bgSkyLayer=null;
+let bgMountainLayer=null;
+let bgForestLayer=null;
+
 // STAGE
 let currentStage=stage1;
 let currentStageNumber=1;
@@ -676,7 +680,17 @@ this.questKey=this.input.keyboard.addKey(
  // UPDATE
  update(){
   if(!player||!player.body)return;
-
+if(this.backgroundLayers){
+  const camera=this.cameras.main;
+  this.backgroundLayers.forEach(layer=>{
+   layer.img.x=
+    GAME_WIDTH/2+
+    camera.scrollX*(1-layer.factor);
+   layer.img.y=
+    GAME_HEIGHT/2+
+    camera.scrollY;
+  });
+}
   if(saveKey&&Phaser.Input.Keyboard.JustDown(saveKey)){
    this.saveGame();
    return;
@@ -701,11 +715,12 @@ this.questKey=this.input.keyboard.addKey(
    this.checkStageComplete();
 
   playerVisual.x=player.x;
+this.updateBackgroundParallax();
 
-  const currentVisualHeight=
-   playerPowered?
-   POWER_PLAYER_HEIGHT:
-   PLAYER_HEIGHT;
+const currentVisualHeight=
+ playerPowered?
+ POWER_PLAYER_HEIGHT:
+ PLAYER_HEIGHT;
 
   playerVisual.y=
    player.y-
@@ -3417,28 +3432,64 @@ this.handleQuestProgress(
 // BACKGROUND
 createForestBackground(){
  const w=currentStage.worldWidth;
- const h=600;
+ const baseY=337.5;
 
- this.add.image(
-  w/2,
-  h/2,
-  'bgSky'
- ).setDisplaySize(w,h)
-  .setDepth(-30);
+ const sky=this.add.image(w/2,baseY,'bgSky');
+ const mountain=this.add.image(w/2,baseY,'bgMountain');
+ const forest=this.add.image(w/2,baseY,'bgForest');
 
- this.add.image(
-  w/2,
-  h/2,
-  'bgMountain'
- ).setDisplaySize(w,h)
-  .setDepth(-20);
+ const scale=w/800;
 
- this.add.image(
-  w/2,
-  h/2,
-  'bgForest'
- ).setDisplaySize(w,h)
-  .setDepth(-10);
+ sky.setScale(scale).setDepth(-30);
+ mountain.setScale(scale).setDepth(-20);
+ forest.setScale(scale).setDepth(-10);
+
+ bgSkyLayer={
+  object:sky,
+  x:w/2,
+  y:baseY,
+  speed:.18,
+  ySpeed:.05
+ };
+
+ bgMountainLayer={
+  object:mountain,
+  x:w/2,
+  y:baseY,
+  speed:.45,
+  ySpeed:.15
+ };
+
+ bgForestLayer={
+  object:forest,
+  x:w/2,
+  y:baseY,
+  speed:.70,
+  ySpeed:.25
+ };
+}
+
+ // BACKGROUND PARALLAX
+updateBackgroundParallax(){
+ const camera=this.cameras.main;
+
+ const layers=[
+  bgSkyLayer,
+  bgMountainLayer,
+  bgForestLayer
+ ];
+
+ layers.forEach(layer=>{
+  if(!layer?.object)return;
+
+  layer.object.x=
+   layer.x+
+   camera.scrollX*(1-layer.speed);
+
+  layer.object.y=
+   layer.y+
+   camera.scrollY*(1-layer.ySpeed);
+ });
 }
 
  // COINS
