@@ -3422,7 +3422,7 @@ this.handleQuestProgress(
 // BACKGROUND
 createForestBackground(){
  const w=currentStage.worldWidth;
- const baseY=300;
+ const baseY=170;
 
  const sky=this.add.image(w/2,baseY,'bgSky');
  const mountain=this.add.image(w/2,baseY,'bgMountain');
@@ -3455,7 +3455,7 @@ createForestBackground(){
   x:w/2,
   y:baseY,
   speed:.70,
-  ySpeed:.25
+  ySpeed:.22
  };
 }
 
