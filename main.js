@@ -453,15 +453,20 @@ questTrackerText=null;
 
   platforms=this.physics.add.staticGroup();
 
-  currentStage.platforms.forEach(p=>{
-   this.createPlatform(
-    p.x,
-    p.y,
-    p.width,
-    p.height
-   );
-  });
+  // PLATFORMS
+currentStage.platforms.forEach(p=>{
+  const isMainGround=
+   p.y>=GAME_HEIGHT-100;
 
+  this.createPlatform(
+   p.x,
+   p.y,
+   p.width,
+   p.height,
+   isMainGround?.2:1
+  );
+});
+   
   this.createPlayerAnimations();
 
   const spawnX=data.keepProgress&&Number.isFinite(data.playerX)?data.playerX:200;
@@ -3392,19 +3397,21 @@ this.handleQuestProgress(
    playerVisual.play('player-walk');
  }
 
- // PLATFORM
- createPlatform(
+// PLATFORM
+createPlatform(
   x,
   y,
   width,
-  height
+  height,
+  alpha=1
  ){
   const platform=this.add.rectangle(
    x,
    y,
    width,
    height,
-   0x18851c
+   0x18851c,
+   alpha
   );
 
   platform.setOrigin(.5);
@@ -3418,7 +3425,7 @@ this.handleQuestProgress(
 
   return platform;
  }
-
+  
 // BACKGROUND
 createForestBackground(){
  const w=currentStage.worldWidth;

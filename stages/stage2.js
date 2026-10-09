@@ -50,8 +50,8 @@ const stage2={
  ],
   // NPC
 npcs:[
- {id:'cave',x:450,y:400},
- {id:'merchant',x:2050,y:400}
+ {id:'cave',x:450,y:450},
+ {id:'merchant',x:2050,y:450}
 ],
   
  // EXIT
