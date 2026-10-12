@@ -215,6 +215,7 @@ const audio=new AudioManager();
 // GLOBAL
 let player=null;
 let playerVisual=null;
+let playerShadow=null;
 let platforms=null;
 let enemies=null;
 let coins=null;
@@ -507,6 +508,17 @@ currentStage.platforms.forEach(p=>{
 
   playerVisual.setDepth(10);
   playerVisual.play('player-idle');
+   // PLAYER SHADOW
+playerShadow=this.add.ellipse(
+ playerVisual.x,
+ player.y+HITBOX_HEIGHT/2+2,
+ 38,
+ 10,
+  0x07110b,
+  0.40
+);
+
+playerShadow.setDepth(9);
 
   this.physics.add.collider(
    player,
@@ -709,7 +721,8 @@ this.questKey=this.input.keyboard.addKey(
   if(!gameOver&&!stageTransitioning)
    this.checkStageComplete();
 
-  playerVisual.x=player.x;
+  // PLAYER POSITION
+playerVisual.x=player.x;
 this.updateBackgroundParallax();
 
 const currentVisualHeight=
@@ -717,9 +730,15 @@ const currentVisualHeight=
  POWER_PLAYER_HEIGHT:
  PLAYER_HEIGHT;
 
-  playerVisual.y=
-   player.y-
-   (currentVisualHeight-HITBOX_HEIGHT)/2;
+playerVisual.y=
+ player.y-
+ (currentVisualHeight-HITBOX_HEIGHT)/2;
+
+if(playerShadow){
+ playerShadow.x=player.x;
+ playerShadow.y=
+  player.y+HITBOX_HEIGHT/2+2;
+}
 
   this.updateCoins();
   this.updateMobileSkillButtons();
@@ -3410,7 +3429,7 @@ createPlatform(
    y,
    width,
    height,
-   0x18851c,
+   0x246b38,
    alpha
   );
 
@@ -3437,9 +3456,42 @@ createForestBackground(){
 
  const scale=w/800;
 
+ // SKY COLOR
+ sky.setTint(0xe2f5ff);
  sky.setScale(scale).setDepth(-30);
+
+ // MOUNTAIN COLOR
+ mountain.setTint(0xc0dce8);
  mountain.setScale(scale).setDepth(-20);
+
+ // FOREST COLOR
+ forest.setTint(0xc0e3c0);
  forest.setScale(scale).setDepth(-10);
+
+ bgSkyLayer={
+  object:sky,
+  x:w/2,
+  y:baseY,
+  speed:.18,
+  ySpeed:.05
+ };
+
+ bgMountainLayer={
+  object:mountain,
+  x:w/2,
+  y:baseY,
+  speed:.45,
+  ySpeed:.15
+ };
+
+ bgForestLayer={
+  object:forest,
+  x:w/2,
+  y:baseY,
+  speed:.70,
+  ySpeed:.22
+ };
+
 
  bgSkyLayer={
   object:sky,
@@ -3517,7 +3569,7 @@ updateBackgroundParallax(){
 
   coin.setStrokeStyle(
    3,
-   0xffa500
+   0xc28a18
   );
 
   coin.setDepth(8);
