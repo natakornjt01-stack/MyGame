@@ -165,28 +165,30 @@ const CHECKPOINT_GLOW_RADIUS=28;
 const DEATH_RESPAWN_DELAY=1000;
 
 // UI
-const HP_UI_X=145;
-const HP_UI_Y=55;
-const HP_BAR_WIDTH=170;
-const HP_BAR_HEIGHT=16;
-const HP_FILL_WIDTH=164;
+const HP_UI_X=237;
+const HP_UI_Y=10;
+const HP_BAR_WIDTH=300;
+const HP_BAR_HEIGHT=18;
+const HP_FILL_WIDTH=294;
 
-const POWER_UI_X=330;
-const POWER_UI_Y=55;
-const POWER_BAR_WIDTH=170;
-const POWER_BAR_HEIGHT=16;
-const POWER_FILL_WIDTH=164;
+const EXP_UI_X=237;
+const EXP_UI_Y=29;
+const EXP_BAR_WIDTH=300;
+const EXP_BAR_HEIGHT=18;
+const EXP_FILL_WIDTH=294;
 
-const EXP_UI_X=560;
-const EXP_UI_Y=55;
-const EXP_BAR_WIDTH=170;
-const EXP_BAR_HEIGHT=16;
-const EXP_FILL_WIDTH=164;
+const POWER_UI_X=237;
+const POWER_UI_Y=48;
+const POWER_BAR_WIDTH=300;
+const POWER_BAR_HEIGHT=18;
+const POWER_FILL_WIDTH=294;
 
 const UI_TEXT_SIZE='13px';
 const UI_TEXT_COLOR='#ffffff';
 const UI_TEXT_STROKE='#000000';
 const UI_TEXT_STROKE_WIDTH=4;
+
+
 
 // SAVE / LOAD
 const SAVE_KEY='mygame-save-v1';
@@ -215,6 +217,7 @@ const audio=new AudioManager();
 // GLOBAL
 let player=null;
 let playerVisual=null;
+let playerPortrait=null;
 let playerShadow=null;
 let platforms=null;
 let enemies=null;
@@ -4905,91 +4908,102 @@ killPlayer(){
  }
 
  // HP UI
- createHPUI(){
-  this.add.rectangle(
-   HP_UI_X,
-   HP_UI_Y,
-   HP_BAR_WIDTH,
-   HP_BAR_HEIGHT,
-   0x222222
-  ).setScrollFactor(0)
-   .setDepth(100);
+createHPUI(){
+ const frame=this.add.rectangle(
+  48,35,76,76,0x171b1b,1
+ ).setStrokeStyle(3,0xd9b76e)
+  .setScrollFactor(0)
+  .setDepth(100);
 
-  hpBar=this.add.rectangle(
-   HP_UI_X-HP_BAR_WIDTH/2+3,
-   HP_UI_Y,
-   HP_FILL_WIDTH,
-   10,
-   0x27d83d
-  ).setOrigin(0,.5)
-   .setScrollFactor(0)
-   .setDepth(101);
+ const texture=this.textures.get('idle1');
+ const source=texture.getSourceImage();
 
-  hpText=this.add.text(
-   HP_UI_X,
-   HP_UI_Y,
-   `HP ${playerHP} / ${this.getPlayerMaxHP()}`,
-   {
-    fontFamily:'monospace',
-    fontSize:UI_TEXT_SIZE,
-    fontStyle:'bold',
-    color:UI_TEXT_COLOR,
-    stroke:UI_TEXT_STROKE,
-    strokeThickness:UI_TEXT_STROKE_WIDTH
-   }
-  ).setOrigin(.5)
-   .setScrollFactor(0)
-   .setDepth(102);
+ playerPortrait=this.add.image(
+  48,35,'idle1'
+ ).setScrollFactor(0)
+  .setDepth(101);
 
-  this.updateHPUI();
- }
+ const cropHeight=Math.max(
+  1,Math.floor(source.height*.6)
+ );
 
- updateHPUI(){
-  if(
-   !hpBar||
-   !hpText
-  )
-   return;
+ playerPortrait.setCrop(
+  0,0,source.width,cropHeight
+ );
 
-  const stats=
-   this.getEquipmentStats();
+ playerPortrait.setDisplaySize(58,58);
 
-  const normalMaxHP=
-   this.getPlayerMaxHP();
+ this.add.rectangle(
+  HP_UI_X,HP_UI_Y,
+  HP_BAR_WIDTH,HP_BAR_HEIGHT,
+  0x171717,0.95
+ ).setStrokeStyle(2,0xd9b76e)
+  .setScrollFactor(0)
+  .setDepth(100);
 
-  const powerMaxHP=
-   PLAYER_POWER_MAX_HP+
-   stats.maxHP;
+ hpBar=this.add.rectangle(
+  HP_UI_X-HP_BAR_WIDTH/2+3,
+  HP_UI_Y,
+  HP_FILL_WIDTH,12,0xd94141
+ ).setOrigin(0,.5)
+  .setScrollFactor(0)
+  .setDepth(101);
 
-  const maxHP=
-   playerPowered?
-   powerMaxHP:
-   normalMaxHP;
+ hpText=this.add.text(
+  HP_UI_X,HP_UI_Y,
+  '',
+  {
+   fontFamily:'monospace',
+   fontSize:'13px',
+   fontStyle:'bold',
+   color:'#ffffff',
+   stroke:'#351010',
+   strokeThickness:3
+  }
+ ).setOrigin(.5)
+  .setScrollFactor(0)
+  .setDepth(102);
 
-  const percent=
-   Phaser.Math.Clamp(
-    playerHP/maxHP,
-    0,
-    1
-   );
+ this.updateHPUI();
+}
 
-  hpBar.displayWidth=
-   HP_FILL_WIDTH*
-   percent;
+// UPDATE HP UI
+updateHPUI(){
+ if(!hpBar||!hpText)return;
 
-  hpBar.setFillStyle(
-   playerPowered?
-   0xa855f7:
-   0x27d83d
-  );
+ const stats=this.getEquipmentStats();
 
-  hpText.setText(
-   `HP ${playerHP} / ${maxHP}`
-  );
+ const normalMaxHP=this.getPlayerMaxHP();
+ const powerMaxHP=PLAYER_POWER_MAX_HP+stats.maxHP;
 
-  hpText.x=HP_UI_X;
-  hpText.y=HP_UI_Y;
- }
+ const maxHP=playerPowered?
+  powerMaxHP:
+  normalMaxHP;
+
+ const currentHP=Phaser.Math.Clamp(
+  playerHP,0,maxHP
+ );
+
+ const percent=Phaser.Math.Clamp(
+  currentHP/maxHP,0,1
+ );
+
+ hpBar.displayWidth=Math.max(
+  0,HP_FILL_WIDTH*percent
+ );
+
+ hpBar.setFillStyle(
+  percent<=.25?0xc62828:0xd94141
+ );
+
+ hpText.setText(
+  `HP ${currentHP}/${maxHP}`
+ );
+
+ hpText.setPosition(
+  HP_UI_X,HP_UI_Y
+ );
+}
 
  // POWER UI
  createPowerUI(){
