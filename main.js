@@ -6024,12 +6024,12 @@ createMobileControls() {
 
   // ปุ่มเดินซ้าย
 leftButton = this.createControlButton(
-    80, 645, 75, 62, '◀'
+    85, 635, 100, 82, '◀'
 );
 
 // ปุ่มเดินขวา
 rightButton = this.createControlButton(
-    170, 645, 75, 62, '▶'
+    200, 635, 100, 82, '▶'
 );
 
   // ปุ่มคุยกับ NPC
@@ -6051,22 +6051,22 @@ rightButton = this.createControlButton(
 
   this.createSkillButton(
     'slash',
-    920,
-    525,
+    1010,
+    535,
     '⚔'
 );
 
 this.createSkillButton(
     'heal',
-    865,
-    590,
+    900,
+    605,
     '+'
 );
 
 this.createSkillButton(
     'burst',
-    920,
-    650,
+    1010,
+    645,
     '✦'
 );
 
@@ -6075,44 +6075,44 @@ this.createSkillButton(
   // -------------------------------------
 
   attackButton = this.createControlButton(
-    1080,
-    635,
-    92,
-    92,
+    1130,
+    625,
+    110,
+    110,
     '⚔',
     'circle'
 );
 
-  attackButton.label.setFontSize(34);
-  attackButton.label.setColor('#ffffff');
+attackButton.label.setFontSize(40);
+attackButton.label.setColor('#ffffff');
 
   // -------------------------------------
   // ปุ่มกระโดดวงกลมด้านขวาบน
   // -------------------------------------
 
   jumpButton = this.createControlButton(
-    1190,
-    570,
-    58,
-    58,
+    1220,
+    545,
+    82,
+    82,
     '↑',
     'circle'
 );
 
-  jumpButton.label.setFontSize(30);
-  jumpButton.label.setColor('#ffffff');
+jumpButton.label.setFontSize(38);
+jumpButton.label.setColor('#ffffff');
 
   // -------------------------------------
 // POWER: ปุ่มสายฟ้าพร้อมสถานะ
 // -------------------------------------
 
 powerButton = this.createControlButton(
-  1190,
-    485,
-    62,
-    62,
-  '⚡',
-  'circle'
+    1220,
+    440,
+    82,
+    82,
+    '⚡',
+    'circle'
 );
 
 // ขอบสีฟ้าเมื่อพร้อมใช้
