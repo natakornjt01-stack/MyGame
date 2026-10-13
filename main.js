@@ -21,9 +21,9 @@ window.addEventListener('unhandledrejection',e=>{
 });
 
 // CONFIG
-const GAME_WIDTH=800;
-const GAME_HEIGHT=600;
-const CONTROL_AREA_Y=525;
+const GAME_WIDTH=1280;
+const GAME_HEIGHT=720;
+const CONTROL_AREA_Y=650;
 const WORLD_GRAVITY=700;
 const PLAYER_MAX_FALL_SPEED=650;
 
