@@ -55,6 +55,7 @@ let quest=null;
 let questOpen=false;
 let questPanel=null;
 let questTrackerText=null;
+let questTrackerButton=null;
 
 // HP
 const PLAYER_MAX_HP=100;
@@ -594,11 +595,12 @@ playerShadow.setDepth(9);
   // CHECKPOINT
   checkpoints=this.physics.add.staticGroup();
 
-  currentStage.checkpoints.forEach(c=>{
-   this.createCheckpoint(
-    c.x,
-    c.index
-   );
+ currentStage.checkpoints.forEach(c=>{
+  this.createCheckpoint(
+   c.x,
+   c.y,
+   c.index
+  );
   });
 
   this.physics.add.overlap(
@@ -693,6 +695,7 @@ this.questKey=this.input.keyboard.addKey(
   this.createCoinUI();
   this.createCheckpointUI();
    this.createQuestUI();
+  this.showStageName();
   this.createMobileControls();
   if(data.keepProgress)this.saveGame(false);
  }
@@ -1350,19 +1353,28 @@ questOpen=false;
 
 // QUEST
 createQuestUI(){
- this.add.rectangle(
-  665,
-  115,
+ questTrackerButton=this.add.rectangle(
+  135,
+  135,
   250,
   66,
   0x111827,
   .72
  ).setScrollFactor(0)
+  .setInteractive({useHandCursor:false})
   .setDepth(100);
 
+ questTrackerButton.on(
+  'pointerup',
+  (pointer,localX,localY,event)=>{
+   event?.stopPropagation();
+   this.toggleQuestPanel();
+  }
+ );
+
  questTrackerText=this.add.text(
-  548,
-  87,
+  18,
+  107,
   'QUEST',
   {
    fontFamily:'monospace',
@@ -1376,6 +1388,34 @@ createQuestUI(){
   .setDepth(102);
 
  this.updateQuestUI();
+}
+
+showStageName(){
+ const stageText=this.add.text(
+  GAME_WIDTH/2,
+  GAME_HEIGHT/2-80,
+  `STAGE ${currentStageNumber}: ${String(currentStage.name).toUpperCase()}`,
+  {
+   fontFamily:'monospace',
+   fontSize:'26px',
+   fontStyle:'bold',
+   color:'#ffffff',
+   stroke:'#000000',
+   strokeThickness:2,
+   align:'center'
+  }
+ ).setOrigin(.5)
+  .setScrollFactor(0)
+  .setDepth(300);
+
+ this.tweens.add({
+  targets:stageText,
+  alpha:0,
+  delay:2200,
+  duration:800,
+  ease:'Cubic.easeOut',
+  onComplete:()=>stageText.destroy()
+ });
 }
 
 updateQuestUI(){
@@ -2947,8 +2987,8 @@ refreshInventory(){
  }
 
  // CHECKPOINT
- createCheckpoint(x,index){
-  const groundTop=GROUND_Y;
+ createCheckpoint(x,checkpointY,index){
+  const groundTop=565;
 
   const checkpoint=this.add.rectangle(
    x,
