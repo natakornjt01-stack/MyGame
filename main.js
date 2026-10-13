@@ -695,7 +695,6 @@ this.questKey=this.input.keyboard.addKey(
   this.createCoinUI();
   this.createCheckpointUI();
    this.createQuestUI();
-  this.showStageName();
   this.createMobileControls();
   if(data.keepProgress)this.saveGame(false);
  }
@@ -3206,37 +3205,21 @@ refreshInventory(){
   });
  }
 
- createCheckpointUI(){
-  checkpointText=this.add.text(
-   220,
-   78,
-   'CHECKPOINT: 0',
-   {
-    fontFamily:'monospace',
-    fontSize:'13px',
-    fontStyle:'bold',
-    color:'#38d9ff',
-    stroke:'#000000',
-    strokeThickness:3
-   }
-  ).setScrollFactor(0)
-   .setDepth(102);
+ // CHECKPOINT UI
+createCheckpointUI(){
+ checkpointText=null;
 
-  this.updateCheckpointUI();
-   // QUEST CHECKPOINT
-this.handleQuestProgress(
- quest?
- quest.onCheckpoint():
- []
-);
- }
+ this.handleQuestProgress(
+  quest?
+  quest.onCheckpoint():
+  []
+ );
+}
 
- updateCheckpointUI(){
-  if(checkpointText)
-   checkpointText.setText(
-    `CHECKPOINT: ${activeCheckpoint}`
-   );
- }
+updateCheckpointUI(){
+ if(checkpointText)
+  checkpointText.setVisible(false);
+}
 
  // POWER
  activatePower(){
@@ -4947,11 +4930,17 @@ killPlayer(){
   });
  }
 
- // HP UI
-createHPUI(){
- const frame=this.add.rectangle(
-  48,35,76,76,0x171b1b,1
- ).setStrokeStyle(3,0xd9b76e)
+ createHPUI(){
+ // กรอบรูปตัวละคร
+ this.add.rectangle(
+  48,35,80,80,0x10131c,.96
+ ).setStrokeStyle(3,0xe5c477)
+  .setScrollFactor(0)
+  .setDepth(100);
+
+ this.add.rectangle(
+  48,35,72,72,0x292334,1
+ ).setStrokeStyle(1,0x8f7042)
   .setScrollFactor(0)
   .setDepth(100);
 
@@ -4973,31 +4962,32 @@ createHPUI(){
 
  playerPortrait.setDisplaySize(58,58);
 
+ // พื้นหลัง HP
  this.add.rectangle(
   HP_UI_X,HP_UI_Y,
   HP_BAR_WIDTH,HP_BAR_HEIGHT,
-  0x171717,0.95
+  0x17131a,.98
  ).setStrokeStyle(2,0xd9b76e)
   .setScrollFactor(0)
   .setDepth(100);
 
+ // แถบ HP
  hpBar=this.add.rectangle(
   HP_UI_X-HP_BAR_WIDTH/2+3,
   HP_UI_Y,
-  HP_FILL_WIDTH,12,0xd94141
+  HP_FILL_WIDTH,12,0xd93646
  ).setOrigin(0,.5)
   .setScrollFactor(0)
   .setDepth(101);
 
  hpText=this.add.text(
-  HP_UI_X,HP_UI_Y,
-  '',
+  HP_UI_X,HP_UI_Y,'',
   {
    fontFamily:'monospace',
    fontSize:'13px',
    fontStyle:'bold',
    color:'#ffffff',
-   stroke:'#351010',
+   stroke:'#3b1018',
    strokeThickness:3
   }
  ).setOrigin(.5)
@@ -5005,7 +4995,7 @@ createHPUI(){
   .setDepth(102);
 
  this.updateHPUI();
-}
+ }
 
 // UPDATE HP UI
 updateHPUI(){
@@ -5047,42 +5037,45 @@ updateHPUI(){
 
  // POWER UI
  createPowerUI(){
-  powerBarBackground=this.add.rectangle(
-   POWER_UI_X,
-   POWER_UI_Y,
-   POWER_BAR_WIDTH,
-   POWER_BAR_HEIGHT,
-   0x222222
-  ).setScrollFactor(0)
-   .setDepth(100);
+ // พื้นหลัง POWER
+ powerBarBackground=this.add.rectangle(
+  POWER_UI_X,
+  POWER_UI_Y,
+  POWER_BAR_WIDTH,
+  POWER_BAR_HEIGHT,
+  0x17131f,.98
+ ).setStrokeStyle(2,0xd9b76e)
+  .setScrollFactor(0)
+  .setDepth(100);
 
-  powerBar=this.add.rectangle(
-   POWER_UI_X-POWER_BAR_WIDTH/2+3,
-   POWER_UI_Y,
-   POWER_FILL_WIDTH,
-   10,
-   0xa855f7
-  ).setOrigin(0,.5)
-   .setScrollFactor(0)
-   .setDepth(101);
+ // แถบพลัง
+ powerBar=this.add.rectangle(
+  POWER_UI_X-POWER_BAR_WIDTH/2+3,
+  POWER_UI_Y,
+  POWER_FILL_WIDTH,
+  10,
+  0x9b5de5
+ ).setOrigin(0,.5)
+  .setScrollFactor(0)
+  .setDepth(101);
 
-  powerText=this.add.text(
-   POWER_UI_X,
-   POWER_UI_Y,
-   'POWER',
-   {
-    fontFamily:'monospace',
-    fontSize:UI_TEXT_SIZE,
-    fontStyle:'bold',
-    color:UI_TEXT_COLOR,
-    stroke:UI_TEXT_STROKE,
-    strokeThickness:UI_TEXT_STROKE_WIDTH
-   }
-  ).setOrigin(.5)
-   .setScrollFactor(0)
-   .setDepth(102);
+ powerText=this.add.text(
+  POWER_UI_X,
+  POWER_UI_Y,
+  'POWER',
+  {
+   fontFamily:'monospace',
+   fontSize:UI_TEXT_SIZE,
+   fontStyle:'bold',
+   color:'#ffffff',
+   stroke:'#28123d',
+   strokeThickness:3
+  }
+ ).setOrigin(.5)
+  .setScrollFactor(0)
+  .setDepth(102);
 
-  this.updatePowerUI();
+ this.updatePowerUI();
  }
 
  updatePowerUI(){
@@ -5156,58 +5149,62 @@ updateHPUI(){
 
  // EXP UI
  createEXPUI(){
-  levelText=this.add.text(
-   EXP_UI_X-82,
-   EXP_UI_Y-17,
-   `LV ${playerLevel}`,
-   {
-    fontFamily:'monospace',
-    fontSize:'14px',
-    fontStyle:'bold',
-    color:'#7dd3fc',
-    stroke:'#000000',
-    strokeThickness:3
-   }
-  ).setOrigin(.5)
-   .setScrollFactor(0)
-   .setDepth(102);
+ // ระดับตัวละคร
+ levelText=this.add.text(
+  EXP_UI_X-82,
+  EXP_UI_Y-17,
+  `LV ${playerLevel}`,
+  {
+   fontFamily:'monospace',
+   fontSize:'14px',
+   fontStyle:'bold',
+   color:'#ffe19a',
+   stroke:'#30200b',
+   strokeThickness:3
+  }
+ ).setOrigin(.5)
+  .setScrollFactor(0)
+  .setDepth(102);
 
-  expBarBackground=this.add.rectangle(
-   EXP_UI_X,
-   EXP_UI_Y,
-   EXP_BAR_WIDTH,
-   EXP_BAR_HEIGHT,
-   0x222222
-  ).setScrollFactor(0)
-   .setDepth(100);
+ // พื้นหลัง EXP
+ expBarBackground=this.add.rectangle(
+  EXP_UI_X,
+  EXP_UI_Y,
+  EXP_BAR_WIDTH,
+  EXP_BAR_HEIGHT,
+  0x111a25,.98
+ ).setStrokeStyle(2,0xd9b76e)
+  .setScrollFactor(0)
+  .setDepth(100);
 
-  expBar=this.add.rectangle(
-   EXP_UI_X-EXP_BAR_WIDTH/2+3,
-   EXP_UI_Y,
-   EXP_FILL_WIDTH,
-   10,
-   0x38bdf8
-  ).setOrigin(0,.5)
-   .setScrollFactor(0)
-   .setDepth(101);
+ // แถบ EXP
+ expBar=this.add.rectangle(
+  EXP_UI_X-EXP_BAR_WIDTH/2+3,
+  EXP_UI_Y,
+  EXP_FILL_WIDTH,
+  10,
+  0x38bdf8
+ ).setOrigin(0,.5)
+  .setScrollFactor(0)
+  .setDepth(101);
 
-  expText=this.add.text(
-   EXP_UI_X,
-   EXP_UI_Y,
-   `EXP ${playerEXP} / ${playerEXPRequired}`,
-   {
-    fontFamily:'monospace',
-    fontSize:UI_TEXT_SIZE,
-    fontStyle:'bold',
-    color:'#ffffff',
-    stroke:'#000000',
-    strokeThickness:UI_TEXT_STROKE_WIDTH
-   }
-  ).setOrigin(.5)
-   .setScrollFactor(0)
-   .setDepth(102);
+ expText=this.add.text(
+  EXP_UI_X,
+  EXP_UI_Y,
+  `EXP ${playerEXP} / ${playerEXPRequired}`,
+  {
+   fontFamily:'monospace',
+   fontSize:UI_TEXT_SIZE,
+   fontStyle:'bold',
+   color:'#ffffff',
+   stroke:'#102b40',
+   strokeThickness:3
+  }
+ ).setOrigin(.5)
+  .setScrollFactor(0)
+  .setDepth(102);
 
-  this.updateEXPUI();
+ this.updateEXPUI();
  }
 
  updateEXPUI(){
