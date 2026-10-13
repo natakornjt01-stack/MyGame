@@ -1,17 +1,20 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#0f172a">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>My Game</title>
-    <style>
-        :root {
-            background: #0f172a;
-            color-scheme: dark;
-        }
 
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    >
+
+    <meta name="theme-color" content="#0f172a">
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>My Game</title>
+
+    <style>
         * {
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
@@ -31,25 +34,29 @@
             -webkit-user-select: none;
         }
 
-        body {
-            display: grid;
-            place-items: center;
-            padding: env(safe-area-inset-top) env(safe-area-inset-right)
-                env(safe-area-inset-bottom) env(safe-area-inset-left);
+        #game-container {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            height: 100dvh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        canvas {
+        #game-container canvas {
             display: block;
-            width: min(100vw, 800px);
-            height: auto;
-            max-height: 100vh;
-            margin: auto;
-            image-rendering: auto;
+            margin: 0;
             touch-action: none;
         }
     </style>
 </head>
+
 <body>
+    <div id="game-container"></div>
+
     <script type="module" src="/main.js"></script>
 </body>
 </html>

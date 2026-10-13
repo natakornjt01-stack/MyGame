@@ -3315,10 +3315,7 @@ updateCheckpointUI(){
   this.updatePowerUI();
 
   if(powerButton){
-   powerButton.setAlpha(.35);
-
-   if(powerButton.label)
-    powerButton.label.setAlpha(.45);
+  this.updatePowerUI();
   }
 
   this.createPowerActivationEffect();
@@ -5125,72 +5122,153 @@ updateHPUI(){
  }
 
  updatePowerUI(){
-  if(
-   !powerBar||
-   !powerText
-  )
-   return;
 
-  if(!playerPowered){
-   const cooldownRemaining=Math.max(
-    0,
-    powerCooldownUntil-Date.now()
-   );
-   const cooldownPercent=Phaser.Math.Clamp(
-    cooldownRemaining/PLAYER_POWER_COOLDOWN,
-    0,
-    1
-   );
+  if(!powerBar || !powerText)
+    return;
 
-   powerBar.displayWidth=
-    POWER_FILL_WIDTH*(cooldownRemaining>0?
-     cooldownPercent:1);
+  const now = Date.now();
 
-   powerText.setText(
-    cooldownRemaining>0?
-    `POWER CD ${Math.ceil(cooldownRemaining/1000)}s`:
-    'POWER READY'
-   );
+  // =====================================
+  // สถานะ 1: กำลังใช้พลัง
+  // =====================================
 
-   if(powerButton){
-    powerButton.setAlpha(cooldownRemaining>0?.35:.65);
-    if(powerButton.label)
-     powerButton.label.setAlpha(cooldownRemaining>0?.45:1);
-   }
+  if(playerPowered){
 
-   powerText.x=POWER_UI_X;
-   powerText.y=POWER_UI_Y;
+    const remaining = Math.max(
+      0,
+      powerEndTime - now
+    );
 
-   return;
+    const percent = Phaser.Math.Clamp(
+      remaining / PLAYER_POWER_DURATION,
+      0,
+      1
+    );
+
+    powerBar.displayWidth =
+      POWER_FILL_WIDTH * percent;
+
+    powerText.setText(
+      `POWER ${(remaining / 1000).toFixed(1)}s`
+    );
+
+    if(powerButton){
+
+      // ขอบสีฟ้าระหว่างใช้พลัง
+      powerButton.setStrokeStyle(
+        3,
+        0x38bdf8,
+        1
+      );
+
+      powerButton.setAlpha(1);
+
+      if(powerButton.label){
+        powerButton.label
+          .setAlpha(1)
+          .setColor('#facc15');
+      }
+
+      if(powerButton.statusText){
+        powerButton.statusText
+          .setText(
+            `${(remaining / 1000).toFixed(1)}s`
+          )
+          .setColor('#7dd3fc')
+          .setAlpha(1);
+      }
+    }
+
+    powerText.x = POWER_UI_X;
+    powerText.y = POWER_UI_Y;
+
+    return;
   }
 
-  const remaining=
-   Math.max(
+  // =====================================
+  // สถานะ 2: คูลดาวน์
+  // =====================================
+
+  const cooldownRemaining = Math.max(
     0,
-    powerEndTime-Date.now()
-   );
-
-  const seconds=
-   remaining/1000;
-
-  const percent=
-   Phaser.Math.Clamp(
-    remaining/
-    PLAYER_POWER_DURATION,
-    0,
-    1
-   );
-
-  powerBar.displayWidth=
-   POWER_FILL_WIDTH*
-   percent;
-
-  powerText.setText(
-   `POWER ${seconds.toFixed(1)}s`
+    powerCooldownUntil - now
   );
 
-  powerText.x=POWER_UI_X;
-  powerText.y=POWER_UI_Y;
+  const isCoolingDown =
+    cooldownRemaining > 0;
+
+  const cooldownPercent = Phaser.Math.Clamp(
+    cooldownRemaining / PLAYER_POWER_COOLDOWN,
+    0,
+    1
+  );
+
+  powerBar.displayWidth =
+    POWER_FILL_WIDTH *
+    (isCoolingDown ? cooldownPercent : 1);
+
+  powerText.setText(
+    isCoolingDown
+      ? `POWER CD ${Math.ceil(cooldownRemaining / 1000)}s`
+      : 'POWER READY'
+  );
+
+  if(powerButton){
+
+    if(isCoolingDown){
+
+      // ขอบม่วงระหว่างคูลดาวน์
+      powerButton.setStrokeStyle(
+        3,
+        0x7e22ce,
+        1
+      );
+
+      powerButton.setAlpha(0.65);
+
+      if(powerButton.label){
+        powerButton.label
+          .setAlpha(0.65)
+          .setColor('#a3a3a3');
+      }
+
+      if(powerButton.statusText){
+        powerButton.statusText
+          .setText(
+            `${Math.ceil(cooldownRemaining / 1000)}s`
+          )
+          .setColor('#c4b5fd')
+          .setAlpha(1);
+      }
+
+    }else{
+
+      // กลับมาพร้อมใช้
+      powerButton.setStrokeStyle(
+        3,
+        0x38bdf8,
+        1
+      );
+
+      powerButton.setAlpha(1);
+
+      if(powerButton.label){
+        powerButton.label
+          .setAlpha(1)
+          .setColor('#facc15');
+      }
+
+      if(powerButton.statusText){
+        powerButton.statusText
+          .setText('READY')
+          .setColor('#7dd3fc')
+          .setAlpha(1);
+      }
+    }
+  }
+
+  powerText.x = POWER_UI_X;
+  powerText.y = POWER_UI_Y;
  }
 
  // EXP UI
@@ -6024,11 +6102,10 @@ createMobileControls() {
   jumpButton.label.setColor('#ffffff');
 
   // -------------------------------------
-  // ปุ่มพลังและกระเป๋า
-  // ย้ายขึ้นด้านบนเพื่อหลีกเลี่ยงปุ่มกระโดด
-  // -------------------------------------
+// POWER: ปุ่มสายฟ้าพร้อมสถานะ
+// -------------------------------------
 
-  powerButton = this.createControlButton(
+powerButton = this.createControlButton(
   740,
   385,
   62,
@@ -6037,6 +6114,7 @@ createMobileControls() {
   'circle'
 );
 
+// ขอบสีฟ้าเมื่อพร้อมใช้
 powerButton.setStrokeStyle(
   3,
   0x38bdf8,
@@ -6046,6 +6124,24 @@ powerButton.setStrokeStyle(
 powerButton.label
   .setFontSize(30)
   .setColor('#facc15');
+
+// ข้อความสถานะใต้สายฟ้า
+powerButton.statusText = this.add.text(
+  740,
+  405,
+  'READY',
+  {
+    fontFamily: 'monospace',
+    fontSize: '8px',
+    fontStyle: 'bold',
+    color: '#7dd3fc',
+    stroke: '#17152b',
+    strokeThickness: 2
+  }
+)
+.setOrigin(0.5)
+.setScrollFactor(0)
+.setDepth(103);
 
 // -------------------------------------
 // BAG: กระเป๋าวงกลมสีม่วง
@@ -6624,6 +6720,7 @@ const config={
   }
  },
  scale:{
+  parent:'game-container',
   mode:Phaser.Scale.FIT,
   autoCenter:Phaser.Scale.CENTER_BOTH
  },
