@@ -2132,221 +2132,203 @@ handleQuestProgress(done=[]){
   });
  }
 
- // MOBILE SKILL BUTTONS
- createSkillButton(id,x,y,icon){
-  const button=this.add.rectangle(
-   x,
-   y,
-   72,
-   62,
-   0x222222,
-   .72
+
+  
+ // =====================================================
+// CIRCULAR SKILL BUTTON
+// =====================================================
+createSkillButton(id, x, y, icon) {
+
+  const radius = 31;
+  const diameter = radius * 2;
+
+  // วงกลมหลัก
+  const button = this.add.circle(
+    x,
+    y,
+    radius,
+    0x17152b,
+    0.92
   );
 
+  // ขอบสีม่วง
   button.setStrokeStyle(
-   2,
-   0xa855f7,
-   1
+    3,
+    0xa855f7,
+    1
   );
 
-  button.setInteractive({
-   useHandCursor:false
-  });
+  // พื้นที่สัมผัสเป็นวงกลม
+  button.setInteractive(
+    new Phaser.Geom.Circle(
+      radius,
+      radius,
+      radius
+    ),
+    Phaser.Geom.Circle.Contains
+  );
 
   button.setScrollFactor(0);
   button.setDepth(100);
 
-  const iconText=this.add.text(
-   x,
-   y-13,
-   icon,
-   {
-    fontFamily:'sans-serif',
-    fontSize:'21px',
-    fontStyle:'bold',
-    color:'#ffffff'
-   }
-  ).setOrigin(.5)
-   .setScrollFactor(0)
-   .setDepth(101);
+  // วงแหวนตกแต่งด้านใน
+  const innerRing = this.add.circle(
+    x,
+    y,
+    radius - 5,
+    0x000000,
+    0
+  );
 
-  const name=this.add.text(
-   x,
-   y+7,
-   id==='slash'?'SLASH':
-   id==='heal'?'HEAL':
-   'BURST',
-   {
-    fontFamily:'monospace',
-    fontSize:'9px',
-    fontStyle:'bold',
-    color:'#ffffff'
-   }
-  ).setOrigin(.5)
-   .setScrollFactor(0)
-   .setDepth(101);
+  innerRing.setStrokeStyle(
+    1,
+    0xc4b5fd,
+    0.7
+  );
 
-  const cooldown=this.add.text(
-   x,
-   y+23,
-   'READY',
-   {
-    fontFamily:'monospace',
-    fontSize:'8px',
-    fontStyle:'bold',
-    color:'#7dd3fc'
-   }
-  ).setOrigin(.5)
-   .setScrollFactor(0)
-   .setDepth(101);
+  innerRing.setScrollFactor(0);
+  innerRing.setDepth(101);
 
-  const cooldownOverlay=this.add.rectangle(
-   x,
-   y,
-   68,
-   58,
-   0x000000,
-   .62
+  // ไอคอนสกิล
+  const iconText = this.add.text(
+    x,
+    y - 8,
+    icon,
+    {
+      fontFamily: 'sans-serif',
+      fontSize: '23px',
+      fontStyle: 'bold',
+      color: '#ffffff'
+    }
+  ).setOrigin(0.5)
+   .setScrollFactor(0)
+   .setDepth(102);
+
+  // ชื่อสกิล
+  const name = this.add.text(
+    x,
+    y + 13,
+    id === 'slash' ? 'SLASH' :
+    id === 'heal' ? 'HEAL' :
+    'BURST',
+    {
+      fontFamily: 'monospace',
+      fontSize: '8px',
+      fontStyle: 'bold',
+      color: '#e9d5ff'
+    }
+  ).setOrigin(0.5)
+   .setScrollFactor(0)
+   .setDepth(102);
+
+  // สถานะคูลดาวน์
+  const cooldown = this.add.text(
+    x,
+    y + 23,
+    'READY',
+    {
+      fontFamily: 'monospace',
+      fontSize: '7px',
+      fontStyle: 'bold',
+      color: '#7dd3fc'
+    }
+  ).setOrigin(0.5)
+   .setScrollFactor(0)
+   .setDepth(103);
+
+  // วงกลมทับเมื่อสกิลกำลังคูลดาวน์
+  const cooldownOverlay = this.add.circle(
+    x,
+    y,
+    radius - 2,
+    0x000000,
+    0.62
   ).setScrollFactor(0)
-   .setDepth(102)
-   .setVisible(false);
-
-  const cooldownRing=this.add.rectangle(
-   x,
-   y,
-   68,
-   58,
-   0x000000,
-   0
-  ).setScrollFactor(0)
-   .setDepth(103)
-   .setVisible(false);
-  cooldownRing.setStrokeStyle(5,0xfca5a5,1);
-
-  const cooldownNumber=this.add.text(
-   x,
-   y,
-   '',
-   {
-    fontFamily:'monospace',
-    fontSize:'20px',
-    fontStyle:'bold',
-    color:'#ffffff',
-    stroke:'#000000',
-    strokeThickness:4
-   }
-  ).setOrigin(.5)
-   .setScrollFactor(0)
    .setDepth(104)
    .setVisible(false);
 
-  button.skillId=id;
-  button.cooldownText=cooldown;
-  button.nameText=name;
-  button.iconText=iconText;
-  button.cooldownOverlay=cooldownOverlay;
-  button.cooldownRing=cooldownRing;
-  button.cooldownNumber=cooldownNumber;
+  // วงแหวนคูลดาวน์
+  const cooldownRing = this.add.circle(
+    x,
+    y,
+    radius - 3,
+    0x000000,
+    0
+  ).setScrollFactor(0)
+   .setDepth(105)
+   .setVisible(false);
 
-  skillButtons[id]=button;
+  cooldownRing.setStrokeStyle(
+    4,
+    0xfca5a5,
+    1
+  );
 
-  button.on(
-   'pointerdown',
-   ()=>{
-    button.setAlpha(.9);
+  // ตัวเลขคูลดาวน์
+  const cooldownNumber = this.add.text(
+    x,
+    y,
+    '',
+    {
+      fontFamily: 'monospace',
+      fontSize: '20px',
+      fontStyle: 'bold',
+      color: '#ffffff',
+      stroke: '#000000',
+      strokeThickness: 4
+    }
+  ).setOrigin(0.5)
+   .setScrollFactor(0)
+   .setDepth(106)
+   .setVisible(false);
+
+  // เก็บข้อมูลที่ระบบคูลดาวน์ต้องใช้
+  button.skillId = id;
+  button.cooldownText = cooldown;
+  button.nameText = name;
+  button.iconText = iconText;
+  button.innerRing = innerRing;
+  button.cooldownOverlay = cooldownOverlay;
+  button.cooldownRing = cooldownRing;
+  button.cooldownNumber = cooldownNumber;
+
+  skillButtons[id] = button;
+
+  // กดใช้สกิล
+  button.on('pointerdown', () => {
+    button.setAlpha(0.9);
     this.useSkill(id);
-   }
-  );
+  });
 
-  button.on(
-   'pointerup',
-   ()=>{
+  // ปล่อยปุ่ม
+  button.on('pointerup', () => {
     button.setAlpha(
-     skills&&
-     skills.getRemaining(id)>0?
-     .4:
-     .72
+      skills && skills.getRemaining(id) > 0
+        ? 0.4
+        : 0.92
     );
-   }
-  );
+  });
 
-  button.on(
-   'pointerupoutside',
-   ()=>{
+  button.on('pointerupoutside', () => {
     button.setAlpha(
-     skills&&
-     skills.getRemaining(id)>0?
-     .4:
-     .72
+      skills && skills.getRemaining(id) > 0
+        ? 0.4
+        : 0.92
     );
-   }
-  );
+  });
 
-  button.on(
-   'pointercancel',
-   ()=>button.setAlpha(
-    skills&&skills.getRemaining(id)>0?.4:.72
-   )
-  );
+  button.on('pointercancel', () => {
+    button.setAlpha(
+      skills && skills.getRemaining(id) > 0
+        ? 0.4
+        : 0.92
+    );
+  });
 
   return button;
- }
-
- updateMobileSkillButtons(){
-  if(!skills)return;
-
-  Object.values(skillButtons).forEach(
-   button=>{
-    if(
-     !button||
-     !button.active||
-     !button.cooldownText
-    )
-     return;
-
-    const left=
-     skills.getRemaining(
-      button.skillId
-     );
-
-    const definition=skills.get(button.skillId);
-    const ratio=definition&&definition.cooldown>0?
-     Phaser.Math.Clamp(left/definition.cooldown,0,1):0;
-
-    button.cooldownText.setText(
-     left>0?
-     (left/1000).toFixed(1)+'s':
-     'READY'
-    );
-
-    button.cooldownText.setColor(
-     left>0?
-     '#fca5a5':
-     '#7dd3fc'
-    );
-
-    button.setAlpha(left>0?.45:.72);
-
-    if(button.cooldownOverlay){
-     button.cooldownOverlay.setVisible(left>0);
-     button.cooldownRing.setVisible(left>0);
-     button.cooldownNumber.setVisible(left>0);
-
-     if(left>0){
-      button.cooldownRing.rotation=
-       (1-ratio)*Math.PI*2;
-      button.cooldownNumber.setText(
-       String(Math.ceil(left/1000))
-      );
-     }
-    }
-
-    button.iconText.setAlpha(left>0?.08:1);
-    button.nameText.setAlpha(left>0?.15:1);
-   }
-  );
- }
-
+}
+  
+  
 // INVENTORY
 toggleInventory(){
  if(
@@ -5876,323 +5858,341 @@ closeShopPanel(){
  shopCoinText=null;
  shopOpen=false;
 }
+
+
   
- // MOBILE CONTROLS
- createMobileControls(){
-  controlArea=this.add.rectangle(
-   GAME_WIDTH/2,
-   CONTROL_AREA_Y,
-   GAME_WIDTH,
-   150,
-   0x111827,
-   .42
+// =====================================================
+// MOBILE CONTROLS
+// =====================================================
+createMobileControls() {
+
+  controlArea = this.add.rectangle(
+    GAME_WIDTH / 2,
+    CONTROL_AREA_Y,
+    GAME_WIDTH,
+    150,
+    0x111827,
+    0.42
   ).setScrollFactor(0)
    .setDepth(95);
 
   controlArea.setStrokeStyle(
-   2,
-   0x475569,
-   .7
+    2,
+    0x475569,
+    0.7
   );
 
-  leftButton=this.createControlButton(
-   65,
-   525,
-   75,
-   62,
-   '◀'
+  // ปุ่มเดินซ้าย
+  leftButton = this.createControlButton(
+    65, 525, 75, 62, '◀'
   );
 
-  rightButton=this.createControlButton(
-   150,
-   525,
-   75,
-   62,
-   '▶'
+  // ปุ่มเดินขวา
+  rightButton = this.createControlButton(
+    150, 525, 75, 62, '▶'
   );
-   
-   talkButton=this.createControlButton(
- 300,
- 475,
- 70,
- 34,
- 'TALK'
-);
 
-talkButton.label.setFontSize(11);
-talkButton.setVisible(false);
-talkButton.label.setVisible(false);
+  // ปุ่มคุยกับ NPC
+  talkButton = this.createControlButton(
+    300, 475, 70, 34, 'TALK'
+  );
 
-talkButton.on(
- 'pointerdown',
- ()=>{
-  talkPressed=true;
- }
-);
+  talkButton.label.setFontSize(11);
+  talkButton.setVisible(false);
+  talkButton.label.setVisible(false);
+
+  talkButton.on('pointerdown', () => {
+    talkPressed = true;
+  });
+
+  // -------------------------------------
+  // วงสกิลขนาดเล็ก
+  // -------------------------------------
 
   this.createSkillButton(
-   'slash',
-   405,
-   525,
-   '⚔'
+    'slash',
+    565,
+    470,
+    '⚔'
   );
 
   this.createSkillButton(
-   'heal',
-   485,
-   525,
-   '+'
+    'heal',
+    550,
+    530,
+    '+'
   );
 
   this.createSkillButton(
-   'burst',
-   565,
-   525,
-   '✦'
+    'burst',
+    580,
+    580,
+    '✦'
   );
 
-  attackButton=this.createControlButton(
-   645,
-   525,
-   68,
-   62,
-   '⚔'
+  // -------------------------------------
+  // ปุ่มโจมตีวงกลมขนาดใหญ่
+  // -------------------------------------
+
+  attackButton = this.createControlButton(
+    665,
+    525,
+    92,
+    92,
+    '⚔',
+    'circle'
   );
 
-  attackButton.label.setFontSize(25);
+  attackButton.label.setFontSize(34);
+  attackButton.label.setColor('#ffffff');
 
-  jumpButton=this.createControlButton(
-   750,
-   530,
-   82,
-   70,
-   'โดด'
+  // -------------------------------------
+  // ปุ่มกระโดดวงกลมด้านขวาบน
+  // -------------------------------------
+
+  jumpButton = this.createControlButton(
+    740,
+    455,
+    58,
+    58,
+    '↑',
+    'circle'
   );
 
-  jumpButton.label.setFontSize(22);
+  jumpButton.label.setFontSize(30);
+  jumpButton.label.setColor('#ffffff');
 
-  powerButton=this.createControlButton(
-   700,
-   475,
-   58,
-   34,
-   'P'
+  // -------------------------------------
+  // ปุ่มพลังและกระเป๋า
+  // ย้ายขึ้นด้านบนเพื่อหลีกเลี่ยงปุ่มกระโดด
+  // -------------------------------------
+
+  powerButton = this.createControlButton(
+    680,
+    415,
+    58,
+    34,
+    'P'
   );
 
   powerButton.label.setFontSize(17);
 
-  inventoryButton=this.createControlButton(
-   770,
-   475,
-   58,
-   34,
-   'BAG'
+  inventoryButton = this.createControlButton(
+    760,
+    415,
+    58,
+    34,
+    'BAG'
   );
 
   inventoryButton.label.setFontSize(10);
 
-  const menuButton=this.createControlButton(
-   765,
-   38,
-   44,
-   44,
-   '≡'
+  // ปุ่มเมนู
+  const menuButton = this.createControlButton(
+    765,
+    38,
+    44,
+    44,
+    '≡'
   );
+
   menuButton.label.setFontSize(24);
 
-  menuButton.on(
-   'pointerdown',
-   ()=>this.togglePauseMenu()
-  );
+  menuButton.on('pointerdown', () => {
+    this.togglePauseMenu();
+  });
 
-  leftButton.on(
-   'pointerdown',
-   ()=>leftPressed=true
-  );
+  // -------------------------------------
+  // การควบคุมเดินซ้าย
+  // -------------------------------------
 
-  leftButton.on(
-   'pointerup',
-   ()=>leftPressed=false
-  );
+  leftButton.on('pointerdown', () => {
+    leftPressed = true;
+  });
 
-  leftButton.on(
-   'pointerupoutside',
-   ()=>leftPressed=false
-  );
+  leftButton.on('pointerup', () => {
+    leftPressed = false;
+  });
 
-  leftButton.on(
-   'pointercancel',
-   ()=>leftPressed=false
-  );
+  leftButton.on('pointerupoutside', () => {
+    leftPressed = false;
+  });
 
-  leftButton.on(
-   'pointerout',
-   ()=>leftPressed=false
-  );
+  leftButton.on('pointercancel', () => {
+    leftPressed = false;
+  });
 
-  rightButton.on(
-   'pointerdown',
-   ()=>rightPressed=true
-  );
+  leftButton.on('pointerout', () => {
+    leftPressed = false;
+  });
 
-  rightButton.on(
-   'pointerup',
-   ()=>rightPressed=false
-  );
+  // -------------------------------------
+  // การควบคุมเดินขวา
+  // -------------------------------------
 
-  rightButton.on(
-   'pointerupoutside',
-   ()=>rightPressed=false
-  );
+  rightButton.on('pointerdown', () => {
+    rightPressed = true;
+  });
 
-  rightButton.on(
-   'pointercancel',
-   ()=>rightPressed=false
-  );
+  rightButton.on('pointerup', () => {
+    rightPressed = false;
+  });
 
-  rightButton.on(
-   'pointerout',
-   ()=>rightPressed=false
-  );
+  rightButton.on('pointerupoutside', () => {
+    rightPressed = false;
+  });
 
-  inventoryButton.on(
-   'pointerdown',
-   ()=>this.toggleInventory()
-  );
+  rightButton.on('pointercancel', () => {
+    rightPressed = false;
+  });
 
-  powerButton.on(
-   'pointerdown',
-   ()=>powerPressed=true
-  );
+  rightButton.on('pointerout', () => {
+    rightPressed = false;
+  });
 
-  powerButton.on(
-   'pointerup',
-   ()=>powerPressed=false
-  );
+  // กระเป๋า
+  inventoryButton.on('pointerdown', () => {
+    this.toggleInventory();
+  });
 
-  powerButton.on(
-   'pointerupoutside',
-   ()=>powerPressed=false
-  );
+  // ใช้พลัง
+  powerButton.on('pointerdown', () => {
+    powerPressed = true;
+  });
 
-  powerButton.on(
-   'pointercancel',
-   ()=>powerPressed=false
-  );
+  powerButton.on('pointerup', () => {
+    powerPressed = false;
+  });
 
-  jumpButton.on(
-   'pointerdown',
-   ()=>jumpPressed=true
-  );
+  powerButton.on('pointerupoutside', () => {
+    powerPressed = false;
+  });
 
-  jumpButton.on(
-   'pointerup',
-   ()=>jumpPressed=false
-  );
+  powerButton.on('pointercancel', () => {
+    powerPressed = false;
+  });
 
-  jumpButton.on(
-   'pointerupoutside',
-   ()=>jumpPressed=false
-  );
+  // กระโดด
+  jumpButton.on('pointerdown', () => {
+    jumpPressed = true;
+  });
 
-  jumpButton.on(
-   'pointercancel',
-   ()=>jumpPressed=false
-  );
+  jumpButton.on('pointerup', () => {
+    jumpPressed = false;
+  });
 
-  attackButton.on(
-   'pointerdown',
-   ()=>attackPressed=true
-  );
+  jumpButton.on('pointerupoutside', () => {
+    jumpPressed = false;
+  });
 
-  attackButton.on(
-   'pointerup',
-   ()=>attackPressed=false
-  );
+  jumpButton.on('pointercancel', () => {
+    jumpPressed = false;
+  });
 
-  attackButton.on(
-   'pointerupoutside',
-   ()=>attackPressed=false
-  );
+  // โจมตี
+  attackButton.on('pointerdown', () => {
+    attackPressed = true;
+  });
 
-  attackButton.on(
-   'pointercancel',
-   ()=>attackPressed=false
-  );
- }
+  attackButton.on('pointerup', () => {
+    attackPressed = false;
+  });
 
- // CONTROL BUTTON
- createControlButton(
+  attackButton.on('pointerupoutside', () => {
+    attackPressed = false;
+  });
+
+  attackButton.on('pointercancel', () => {
+    attackPressed = false;
+  });
+}
+
+
+  
+ // =====================================================
+// CONTROL BUTTON
+// =====================================================
+createControlButton(
   x,
   y,
   width,
   height,
-  text
- ){
-  const button=this.add.rectangle(
-   x,
-   y,
-   width,
-   height,
-   0x222222,
-   .65
-  );
+  text,
+  shape = 'rect'
+) {
 
-  button.setInteractive({
-   useHandCursor:false
-  });
+  let button;
+
+  if (shape === 'circle') {
+
+    const radius = Math.min(width, height) / 2;
+
+    button = this.add.circle(
+      x,
+      y,
+      radius,
+      0x17152b,
+      0.92
+    );
+
+    button.setStrokeStyle(
+      3,
+      0xa855f7,
+      1
+    );
+
+    button.setInteractive(
+      new Phaser.Geom.Circle(
+        radius,
+        radius,
+        radius
+      ),
+      Phaser.Geom.Circle.Contains
+    );
+
+  } else {
+
+    button = this.add.rectangle(
+      x,
+      y,
+      width,
+      height,
+      0x222222,
+      0.65
+    );
+
+    button.setInteractive({
+      useHandCursor: false
+    });
+
+  }
 
   button.setScrollFactor(0);
   button.setDepth(100);
 
-  const label=this.add.text(
-   x,
-   y,
-   text,
-   {
-    fontFamily:'sans-serif',
-    fontSize:30,
-    fontStyle:'bold',
-    color:'#ffffff'
-   }
-  ).setOrigin(.5)
+  const label = this.add.text(
+    x,
+    y,
+    text,
+    {
+      fontFamily: 'sans-serif',
+      fontSize: '30px',
+      fontStyle: 'bold',
+      color: '#ffffff',
+      stroke: '#000000',
+      strokeThickness: 4
+    }
+  ).setOrigin(0.5)
    .setScrollFactor(0)
    .setDepth(101);
 
-  button.label=label;
-
-  button.on(
-   'pointerdown',
-   ()=>button.setAlpha(.85)
-  );
-
-  button.on(
-   'pointerup',
-   ()=>{
-    button.setAlpha(
-     button===powerButton&&
-     playerPowered?
-     .35:
-     .65
-    );
-   }
-  );
-
-  button.on(
-   'pointerupoutside',
-   ()=>{
-    button.setAlpha(
-     button===powerButton&&
-     playerPowered?
-     .35:
-     .65
-    );
-   }
-  );
+  button.label = label;
 
   return button;
- }
 }
+}
+
+
 
 // MAIN MENU
 class MainMenuScene extends Phaser.Scene{
@@ -6348,6 +6348,8 @@ class MainMenuScene extends Phaser.Scene{
   return button;
  }
 }
+
+
 
 // SETTINGS
 class SettingsScene extends Phaser.Scene{
