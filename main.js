@@ -2328,6 +2328,67 @@ createSkillButton(id, x, y, icon) {
   return button;
 }
   
+// =====================================================
+// UPDATE MOBILE SKILL BUTTONS
+// =====================================================
+updateMobileSkillButtons() {
+  if (!skills) return;
+
+  Object.values(skillButtons).forEach(button => {
+    if (
+      !button ||
+      !button.active ||
+      !button.cooldownText
+    ) return;
+
+    const left = skills.getRemaining(button.skillId);
+    const definition = skills.get(button.skillId);
+
+    const ratio =
+      definition && definition.cooldown > 0
+        ? Phaser.Math.Clamp(
+            left / definition.cooldown,
+            0,
+            1
+          )
+        : 0;
+
+    button.cooldownText.setText(
+      left > 0
+        ? (left / 1000).toFixed(1) + 's'
+        : 'READY'
+    );
+
+    button.cooldownText.setColor(
+      left > 0 ? '#fca5a5' : '#7dd3fc'
+    );
+
+    button.setAlpha(left > 0 ? 0.45 : 0.92);
+
+    if (button.cooldownOverlay) {
+      button.cooldownOverlay.setVisible(left > 0);
+      button.cooldownRing.setVisible(left > 0);
+      button.cooldownNumber.setVisible(left > 0);
+
+      if (left > 0) {
+        button.cooldownRing.rotation =
+          (1 - ratio) * Math.PI * 2;
+
+        button.cooldownNumber.setText(
+          String(Math.ceil(left / 1000))
+        );
+      }
+    }
+
+    if (button.iconText) {
+      button.iconText.setAlpha(left > 0 ? 0.08 : 1);
+    }
+
+    if (button.nameText) {
+      button.nameText.setAlpha(left > 0 ? 0.15 : 1);
+    }
+  });
+}
   
 // INVENTORY
 toggleInventory(){
@@ -5911,22 +5972,22 @@ createMobileControls() {
 
   this.createSkillButton(
     'slash',
-    565,
-    470,
+    600,
+    450,
     '⚔'
   );
 
   this.createSkillButton(
     'heal',
-    550,
-    530,
+    565,
+    515,
     '+'
   );
 
   this.createSkillButton(
     'burst',
-    580,
-    580,
+    590,
+    575,
     '✦'
   );
 
@@ -5968,24 +6029,40 @@ createMobileControls() {
   // -------------------------------------
 
   powerButton = this.createControlButton(
-    680,
-    415,
-    58,
-    34,
-    'P'
-  );
+  740,
+  385,
+  62,
+  62,
+  '⚡',
+  'circle'
+);
 
-  powerButton.label.setFontSize(17);
+powerButton.setStrokeStyle(
+  3,
+  0x38bdf8,
+  1
+);
 
-  inventoryButton = this.createControlButton(
-    760,
-    415,
-    58,
-    34,
-    'BAG'
-  );
+powerButton.label
+  .setFontSize(30)
+  .setColor('#facc15');
 
-  inventoryButton.label.setFontSize(10);
+// -------------------------------------
+// BAG: กระเป๋าวงกลมสีม่วง
+// -------------------------------------
+
+inventoryButton = this.createControlButton(
+  765,
+  95,
+  58,
+  58,
+  '🎒',
+  'circle'
+);
+
+inventoryButton.label
+  .setFontSize(27)
+  .setColor('#ffffff');
 
   // ปุ่มเมนู
   const menuButton = this.createControlButton(
