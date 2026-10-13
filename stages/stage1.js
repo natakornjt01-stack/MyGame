@@ -10,7 +10,7 @@ const stage1={
  {x:2000,y:590,width:800,height:50},
  {x:3000,y:590,width:1500,height:50},
    
-  {x:550,y:330,width:180,height:25},
+  {x:550,y:490,width:180,height:25},
   {x:900,y:270,width:180,height:25},
   {x:1300,y:330,width:180,height:25},
   {x:1750,y:270,width:155,height:25},

@@ -184,7 +184,8 @@ const POWER_BAR_WIDTH=300;
 const POWER_BAR_HEIGHT=18;
 const POWER_FILL_WIDTH=294;
 
-const UI_TEXT_SIZE='13px';
+// HUD TEXT STYLE
+const UI_TEXT_SIZE='15px';
 const UI_TEXT_COLOR='#ffffff';
 const UI_TEXT_STROKE='#000000';
 const UI_TEXT_STROKE_WIDTH=4;
@@ -1353,10 +1354,10 @@ questOpen=false;
 // QUEST
 createQuestUI(){
  questTrackerButton=this.add.rectangle(
-  135,
-  135,
-  250,
-  66,
+  145,
+   139,
+   270,
+   70,
   0x111827,
   .72
  ).setScrollFactor(0)
@@ -1373,7 +1374,7 @@ createQuestUI(){
 
  questTrackerText=this.add.text(
   18,
-  107,
+  109,
   'QUEST',
   {
    fontFamily:'monospace',
@@ -4982,14 +4983,16 @@ killPlayer(){
 
  hpText=this.add.text(
   HP_UI_X,HP_UI_Y,'',
-  {
-   fontFamily:'monospace',
-   fontSize:'13px',
-   fontStyle:'bold',
-   color:'#ffffff',
-   stroke:'#3b1018',
-   strokeThickness:3
+  
+   {
+    fontFamily:'monospace',
+    fontSize:'15px',
+    fontStyle:'bold',
+    color:'#ffffff',
+    stroke:'#3b1018',
+    strokeThickness:4
   }
+  
  ).setOrigin(.5)
   .setScrollFactor(0)
   .setDepth(102);
