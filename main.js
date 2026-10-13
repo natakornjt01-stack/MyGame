@@ -6721,7 +6721,7 @@ const config={
  },
  scale:{
   parent:'game-container',
-  mode:Phaser.Scale.FIT,
+mode:Phaser.Scale.EXPAND,
   autoCenter:Phaser.Scale.CENTER_BOTH
  },
  scene:[MainMenuScene,SettingsScene,GameScene]
