@@ -6007,12 +6007,13 @@ createMobileControls() {
 
   controlArea = this.add.rectangle(
     GAME_WIDTH / 2,
-    CONTROL_AREA_Y,
+    645,
     GAME_WIDTH,
     150,
     0x111827,
-    0.42
-  ).setScrollFactor(0)
+    0.25
+)
+    .setScrollFactor(0)
    .setDepth(95);
 
   controlArea.setStrokeStyle(
@@ -6022,19 +6023,19 @@ createMobileControls() {
   );
 
   // ปุ่มเดินซ้าย
-  leftButton = this.createControlButton(
-    65, 525, 75, 62, '◀'
-  );
+leftButton = this.createControlButton(
+    80, 645, 75, 62, '◀'
+);
 
-  // ปุ่มเดินขวา
-  rightButton = this.createControlButton(
-    150, 525, 75, 62, '▶'
-  );
+// ปุ่มเดินขวา
+rightButton = this.createControlButton(
+    170, 645, 75, 62, '▶'
+);
 
   // ปุ่มคุยกับ NPC
   talkButton = this.createControlButton(
-    300, 475, 70, 34, 'TALK'
-  );
+    280, 595, 70, 34, 'TALK'
+);
 
   talkButton.label.setFontSize(11);
   talkButton.setVisible(false);
@@ -6050,37 +6051,37 @@ createMobileControls() {
 
   this.createSkillButton(
     'slash',
-    600,
-    450,
+    920,
+    525,
     '⚔'
-  );
+);
 
-  this.createSkillButton(
+this.createSkillButton(
     'heal',
-    565,
-    515,
-    '+'
-  );
-
-  this.createSkillButton(
-    'burst',
+    865,
     590,
-    575,
+    '+'
+);
+
+this.createSkillButton(
+    'burst',
+    920,
+    650,
     '✦'
-  );
+);
 
   // -------------------------------------
   // ปุ่มโจมตีวงกลมขนาดใหญ่
   // -------------------------------------
 
   attackButton = this.createControlButton(
-    665,
-    525,
+    1080,
+    635,
     92,
     92,
     '⚔',
     'circle'
-  );
+);
 
   attackButton.label.setFontSize(34);
   attackButton.label.setColor('#ffffff');
@@ -6090,13 +6091,13 @@ createMobileControls() {
   // -------------------------------------
 
   jumpButton = this.createControlButton(
-    740,
-    455,
+    1190,
+    570,
     58,
     58,
     '↑',
     'circle'
-  );
+);
 
   jumpButton.label.setFontSize(30);
   jumpButton.label.setColor('#ffffff');
@@ -6106,10 +6107,10 @@ createMobileControls() {
 // -------------------------------------
 
 powerButton = this.createControlButton(
-  740,
-  385,
-  62,
-  62,
+  1190,
+    485,
+    62,
+    62,
   '⚡',
   'circle'
 );
@@ -6127,8 +6128,8 @@ powerButton.label
 
 // ข้อความสถานะใต้สายฟ้า
 powerButton.statusText = this.add.text(
-  740,
-  405,
+  1190,
+505,
   'READY',
   {
     fontFamily: 'monospace',
@@ -6148,10 +6149,10 @@ powerButton.statusText = this.add.text(
 // -------------------------------------
 
 inventoryButton = this.createControlButton(
-  765,
-  95,
-  58,
-  58,
+  1215,
+    105,
+    58,
+    58,
   '🎒',
   'circle'
 );
@@ -6162,8 +6163,8 @@ inventoryButton.label
 
   // ปุ่มเมนู
   const menuButton = this.createControlButton(
-    765,
-    38,
+    1215,
+    42,
     44,
     44,
     '≡'
