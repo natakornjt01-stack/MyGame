@@ -669,13 +669,16 @@ this.questKey=this.input.keyboard.addKey(
   );
    
 
-  this.cameras.main.startFollow(
-   player,
-   true,
-   .08,
-   .08
-  );
+  // ซูมกล้องเข้าหาตัวละคร
+this.cameras.main.setZoom(1.25);
 
+this.cameras.main.startFollow(
+    player,
+    true,
+    .08,
+    .08
+);
+   
   this.add.text(
    20,
    15,
@@ -2139,7 +2142,7 @@ handleQuestProgress(done=[]){
 // =====================================================
 createSkillButton(id, x, y, icon) {
 
-  const radius = 31;
+  const radius = 46;
   const diameter = radius * 2;
 
   // วงกลมหลัก
@@ -6024,12 +6027,12 @@ createMobileControls() {
 
   // ปุ่มเดินซ้าย
 leftButton = this.createControlButton(
-    85, 635, 100, 82, '◀'
+    125, 635, 112, 90, '◀'
 );
 
 // ปุ่มเดินขวา
 rightButton = this.createControlButton(
-    200, 635, 100, 82, '▶'
+    300, 635, 112, 90, '▶'
 );
 
   // ปุ่มคุยกับ NPC
@@ -6049,41 +6052,22 @@ rightButton = this.createControlButton(
   // วงสกิลขนาดเล็ก
   // -------------------------------------
 
-  this.createSkillButton(
-    'slash',
-    1010,
-    535,
-    '⚔'
-);
-
-this.createSkillButton(
-    'heal',
-    900,
-    605,
-    '+'
-);
-
-this.createSkillButton(
-    'burst',
-    1010,
-    645,
-    '✦'
-);
-
+  this.createSkillButton('slash', 1010, 520, '⚔');
+  
+this.createSkillButton('heal',   915, 590, '+');
+  
+this.createSkillButton('burst', 1010, 645, '✦');
   // -------------------------------------
   // ปุ่มโจมตีวงกลมขนาดใหญ่
   // -------------------------------------
 
   attackButton = this.createControlButton(
-    1130,
-    625,
-    110,
-    110,
+    1650, 620, 118, 118,
     '⚔',
     'circle'
 );
 
-attackButton.label.setFontSize(40);
+attackButton.label.setFontSize(42);
 attackButton.label.setColor('#ffffff');
 
   // -------------------------------------
@@ -6091,15 +6075,12 @@ attackButton.label.setColor('#ffffff');
   // -------------------------------------
 
   jumpButton = this.createControlButton(
-    1220,
-    545,
-    82,
-    82,
+    1200, 520, 90, 90,
     '↑',
     'circle'
 );
 
-jumpButton.label.setFontSize(38);
+jumpButton.label.setFontSize(40);
 jumpButton.label.setColor('#ffffff');
 
   // -------------------------------------
@@ -6107,10 +6088,7 @@ jumpButton.label.setColor('#ffffff');
 // -------------------------------------
 
 powerButton = this.createControlButton(
-    1220,
-    440,
-    82,
-    82,
+    1200, 410, 90, 90,
     '⚡',
     'circle'
 );
@@ -6128,17 +6106,17 @@ powerButton.label
 
 // ข้อความสถานะใต้สายฟ้า
 powerButton.statusText = this.add.text(
-  1190,
-505,
-  'READY',
-  {
-    fontFamily: 'monospace',
-    fontSize: '8px',
-    fontStyle: 'bold',
-    color: '#7dd3fc',
-    stroke: '#17152b',
-    strokeThickness: 2
-  }
+    1200,
+    462,
+    'READY',
+    {
+        fontFamily: 'monospace',
+        fontSize: '9px',
+        fontStyle: 'bold',
+        color: '#7dd3fc',
+        stroke: '#17152b',
+        strokeThickness: 2
+    }
 )
 .setOrigin(0.5)
 .setScrollFactor(0)
@@ -6546,15 +6524,52 @@ class MainMenuScene extends Phaser.Scene{
  }
 
  createBackground(){
-  this.add.rectangle(400,300,800,600,0x0f172a);
-  this.add.circle(120,110,90,0x1d4ed8,.18);
-  this.add.circle(690,170,130,0x7c3aed,.16);
-  this.add.circle(410,560,210,0x0891b2,.12);
+  // พื้นหลังเต็มพื้นที่เกม
+  this.add.rectangle(
+    GAME_WIDTH / 2,
+    GAME_HEIGHT / 2,
+    GAME_WIDTH,
+    GAME_HEIGHT,
+    0x0f172a
+  );
 
-  for(let i=0;i<12;i++){
-   const x=(i*137)%800;
-   const y=180+(i*83)%300;
-   this.add.circle(x,y,2+(i%3),0xffffff,.35);
+  // วงแสงตกแต่ง
+  this.add.circle(
+    GAME_WIDTH * 0.15,
+    GAME_HEIGHT * 0.18,
+    90,
+    0x1d4ed8,
+    0.18
+  );
+
+  this.add.circle(
+    GAME_WIDTH * 0.80,
+    GAME_HEIGHT * 0.25,
+    130,
+    0x7c3aed,
+    0.16
+  );
+
+  this.add.circle(
+    GAME_WIDTH * 0.48,
+    GAME_HEIGHT * 0.80,
+    210,
+    0x0891b2,
+    0.12
+  );
+
+  // ดาวตกแต่งกระจายเต็มจอ
+  for(let i = 0; i < 20; i++){
+    const x = (i * 137) % GAME_WIDTH;
+    const y = 80 + (i * 83) % (GAME_HEIGHT - 100);
+
+    this.add.circle(
+      x,
+      y,
+      2 + (i % 3),
+      0xffffff,
+      0.35
+    );
   }
  }
 
