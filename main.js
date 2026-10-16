@@ -6279,6 +6279,66 @@ inventoryButton.label
   attackButton.on('pointercancel', () => {
     attackPressed = false;
   });
+// =========================================
+// แสดงปุ่มควบคุมเฉพาะอุปกรณ์ที่ใช้ระบบสัมผัส
+// =========================================
+
+const isTouchDevice =
+    window.matchMedia('(pointer: coarse)').matches;
+
+if (!isTouchDevice) {
+
+    // ซ่อนแถบพื้นหลังควบคุม
+    controlArea.setVisible(false);
+
+    // ซ่อนปุ่มเดิน
+    leftButton.setVisible(false);
+    leftButton.label.setVisible(false);
+
+    rightButton.setVisible(false);
+    rightButton.label.setVisible(false);
+
+    // ซ่อนปุ่มคุย
+    talkButton.setVisible(false);
+    talkButton.label.setVisible(false);
+
+    // ซ่อนปุ่มโจมตี
+    attackButton.setVisible(false);
+    attackButton.label.setVisible(false);
+
+    // ซ่อนปุ่มกระโดด
+    jumpButton.setVisible(false);
+    jumpButton.label.setVisible(false);
+
+    // ซ่อนปุ่มพลัง
+    powerButton.setVisible(false);
+    powerButton.label.setVisible(false);
+    powerButton.statusText.setVisible(false);
+
+    // ซ่อนปุ่มกระเป๋า
+    inventoryButton.setVisible(false);
+    inventoryButton.label.setVisible(false);
+
+    // ซ่อนปุ่มเมนู
+    menuButton.setVisible(false);
+    menuButton.label.setVisible(false);
+
+    // ซ่อนปุ่มสกิลและองค์ประกอบของสกิล
+    Object.values(skillButtons).forEach(button => {
+
+        button.setVisible(false);
+
+        button.innerRing.setVisible(false);
+        button.iconText.setVisible(false);
+        button.nameText.setVisible(false);
+        button.cooldownText.setVisible(false);
+        button.cooldownOverlay.setVisible(false);
+        button.cooldownRing.setVisible(false);
+        button.cooldownNumber.setVisible(false);
+
+    });
+
+}
 }
 
 
