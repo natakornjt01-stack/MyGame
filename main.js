@@ -703,9 +703,45 @@ this.cameras.main.startFollow(
   if(data.keepProgress)this.saveGame(false);
  }
 
+ syncScreenUIToCameraZoom(){
+  const camera=this.cameras.main;
+  const zoom=Math.max(camera.zoom||1,.01);
+  const centerX=GAME_WIDTH/2;
+  const centerY=GAME_HEIGHT/2;
+
+  this.children.list.forEach(object=>{
+   if(
+    !object||
+    !object.active||
+    object.parentContainer||
+    object.scrollFactorX!==0||
+    object.scrollFactorY!==0
+   )
+    return;
+
+   if(!object.__screenUIBase){
+    object.__screenUIBase={
+     x:object.x,
+     y:object.y,
+     scaleX:object.scaleX||1,
+     scaleY:object.scaleY||1
+    };
+   }
+
+   const base=object.__screenUIBase;
+   object.x=centerX+(base.x-centerX)/zoom;
+   object.y=centerY+(base.y-centerY)/zoom;
+   object.setScale(
+    base.scaleX/zoom,
+    base.scaleY/zoom
+   );
+  });
+ }
+
  // UPDATE
  update(){
   if(!player||!player.body)return;
+  this.syncScreenUIToCameraZoom();
 
   if(saveKey&&Phaser.Input.Keyboard.JustDown(saveKey)){
    this.saveGame();
@@ -6027,17 +6063,17 @@ createMobileControls() {
 
   // ปุ่มเดินซ้าย
 leftButton = this.createControlButton(
-    125, 635, 112, 90, '◀'
+    255, 635, 112, 90, '◀'
 );
 
 // ปุ่มเดินขวา
 rightButton = this.createControlButton(
-    300, 635, 112, 90, '▶'
+    450, 635, 112, 90, '▶'
 );
 
   // ปุ่มคุยกับ NPC
   talkButton = this.createControlButton(
-    280, 595, 70, 34, 'TALK'
+    280, 295, 70, 64, 'TALK'
 );
 
   talkButton.label.setFontSize(11);
