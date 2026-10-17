@@ -749,8 +749,13 @@ this.cameras.main.startFollow(
 
  // UPDATE
  update(){
-  if(!player||!player.body)return;
-  this.syncScreenUIToCameraZoom();
+    if(!player||!player.body)return;
+
+    this.syncScreenUIToCameraZoom();
+
+    // อัปเดตหลอดและข้อความ HUD หลังซิงก์กล้อง
+    this.updateHPUI();
+    this.updateEXPUI();
 
   if(saveKey&&Phaser.Input.Keyboard.JustDown(saveKey)){
    this.saveGame();
@@ -5089,42 +5094,56 @@ killPlayer(){
  }
 
 // UPDATE HP UI
+
+
 updateHPUI(){
- if(!hpBar||!hpText)return;
+    // ป้องกันการเรียกก่อนสร้างหลอด HP สำเร็จ
+    if(!hpBar || !hpText) return;
 
- const stats=this.getEquipmentStats();
+    const stats = this.getEquipmentStats();
 
- const normalMaxHP=this.getPlayerMaxHP();
- const powerMaxHP=PLAYER_POWER_MAX_HP+stats.maxHP;
+    const normalMaxHP = this.getPlayerMaxHP();
+    const powerMaxHP = PLAYER_POWER_MAX_HP + stats.maxHP;
 
- const maxHP=playerPowered?
-  powerMaxHP:
-  normalMaxHP;
+    const maxHP = Math.max(
+        1,
+        playerPowered ? powerMaxHP : normalMaxHP
+    );
 
- const currentHP=Phaser.Math.Clamp(
-  playerHP,0,maxHP
- );
+    const currentHP = Phaser.Math.Clamp(
+        playerHP,
+        0,
+        maxHP
+    );
 
- const percent=Phaser.Math.Clamp(
-  currentHP/maxHP,0,1
- );
+    const percent = Phaser.Math.Clamp(
+        currentHP / maxHP,
+        0,
+        1
+    );
 
- hpBar.displayWidth=Math.max(
-  0,HP_FILL_WIDTH*percent
- );
+    const zoom = Math.max(
+        this.cameras.main.zoom || 1,
+        0.01
+    );
 
- hpBar.setFillStyle(
-  percent<=.25?0xc62828:0xd94141
- );
+    // ตรวจสอบอีกครั้งก่อนแก้ความกว้าง
+    if(!hpBar || !hpBar.active) return;
 
- hpText.setText(
-  `HP ${currentHP}/${maxHP}`
- );
+    hpBar.displayWidth = Math.max(
+        0,
+        (HP_FILL_WIDTH * percent) / zoom
+    );
 
- hpText.setPosition(
-  HP_UI_X,HP_UI_Y
- );
+    hpBar.setFillStyle(
+        percent <= 0.25 ? 0xc62828 : 0xd94141
+    );
+
+    hpText.setText(
+        `HP ${currentHP}/${maxHP}`
+    );
 }
+
 
  // POWER UI
  createPowerUI(){
@@ -5175,6 +5194,10 @@ updateHPUI(){
     return;
 
   const now = Date.now();
+   const zoom = Math.max(
+    this.cameras.main.zoom || 1,
+    0.01
+);
 
   // =====================================
   // สถานะ 1: กำลังใช้พลัง
@@ -5194,7 +5217,10 @@ updateHPUI(){
     );
 
     powerBar.displayWidth =
-      POWER_FILL_WIDTH * percent;
+    (
+        POWER_FILL_WIDTH *
+        (isCoolingDown ? cooldownPercent : 1)
+    ) / zoom;
 
     powerText.setText(
       `POWER ${(remaining / 1000).toFixed(1)}s`
@@ -5227,8 +5253,7 @@ updateHPUI(){
       }
     }
 
-    powerText.x = POWER_UI_X;
-    powerText.y = POWER_UI_Y;
+    
 
     return;
   }
@@ -5403,18 +5428,10 @@ updateHPUI(){
    `LV ${playerLevel}`
   );
 
-  levelText.x=
-   EXP_UI_X-82;
-
-  levelText.y=
-   EXP_UI_Y-17;
-
   expText.setText(
    `EXP ${playerEXP} / ${playerEXPRequired}`
   );
 
-  expText.x=EXP_UI_X;
-  expText.y=EXP_UI_Y;
  }
 
  // COIN UI
