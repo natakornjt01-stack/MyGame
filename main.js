@@ -5218,13 +5218,12 @@ updateHPUI(){
 
     
 
+
 powerBar.displayWidth = Math.max(
     0,
-    (
-        POWER_FILL_WIDTH *
-        (isCoolingDown ? cooldownPercent : 1)
-    ) / zoom
+    (POWER_FILL_WIDTH * percent) / zoom
 );
+
 
 
     powerText.setText(
