@@ -5216,11 +5216,16 @@ updateHPUI(){
       1
     );
 
-    powerBar.displayWidth =
+    
+
+powerBar.displayWidth = Math.max(
+    0,
     (
         POWER_FILL_WIDTH *
         (isCoolingDown ? cooldownPercent : 1)
-    ) / zoom;
+    ) / zoom
+);
+
 
     powerText.setText(
       `POWER ${(remaining / 1000).toFixed(1)}s`
