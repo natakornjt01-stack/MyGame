@@ -20,6 +20,15 @@ window.addEventListener('unhandledrejection',e=>{
  console.error('Unhandled Promise Rejection:',e.reason);
 });
 
+function requestLandscape(){
+ if(screen.orientation&&screen.orientation.lock){
+  screen.orientation.lock('landscape').catch(()=>{});
+ }
+}
+
+window.addEventListener('pointerdown',requestLandscape,{once:true});
+window.addEventListener('touchstart',requestLandscape,{once:true});
+
 // CONFIG
 const GAME_WIDTH=1280;
 const GAME_HEIGHT=720;
@@ -6063,17 +6072,17 @@ createMobileControls() {
 
   // ปุ่มเดินซ้าย
 leftButton = this.createControlButton(
-    255, 635, 112, 90, '◀'
+    125, 635, 118, 96, '◀'
 );
 
 // ปุ่มเดินขวา
 rightButton = this.createControlButton(
-    450, 635, 112, 90, '▶'
+    265, 635, 118, 96, '▶'
 );
 
   // ปุ่มคุยกับ NPC
   talkButton = this.createControlButton(
-    280, 295, 70, 64, 'TALK'
+    255, 535, 86, 48, 'TALK'
 );
 
   talkButton.label.setFontSize(11);
@@ -6088,17 +6097,17 @@ rightButton = this.createControlButton(
   // วงสกิลขนาดเล็ก
   // -------------------------------------
 
-  this.createSkillButton('slash', 1010, 520, '⚔');
+  this.createSkillButton('slash', 970, 530, '⚔');
   
-this.createSkillButton('heal',   915, 590, '+');
+this.createSkillButton('heal',   900, 650, '+');
   
-this.createSkillButton('burst', 1010, 645, '✦');
+this.createSkillButton('burst', 1100, 500, '✦');
   // -------------------------------------
   // ปุ่มโจมตีวงกลมขนาดใหญ่
   // -------------------------------------
 
   attackButton = this.createControlButton(
-    1650, 620, 118, 118,
+    1085, 635, 118, 118,
     '⚔',
     'circle'
 );
@@ -6111,7 +6120,7 @@ attackButton.label.setColor('#ffffff');
   // -------------------------------------
 
   jumpButton = this.createControlButton(
-    1200, 520, 90, 90,
+    1200, 535, 96, 96,
     '↑',
     'circle'
 );
@@ -6124,7 +6133,7 @@ jumpButton.label.setColor('#ffffff');
 // -------------------------------------
 
 powerButton = this.createControlButton(
-    1200, 410, 90, 90,
+    1200, 410, 96, 96,
     '⚡',
     'circle'
 );
@@ -6833,7 +6842,7 @@ const config={
  },
  scale:{
   parent:'game-container',
-mode:Phaser.Scale.EXPAND,
+  mode:Phaser.Scale.FIT,
   autoCenter:Phaser.Scale.CENTER_BOTH
  },
  scene:[MainMenuScene,SettingsScene,GameScene]
