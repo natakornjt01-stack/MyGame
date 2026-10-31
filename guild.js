@@ -51,9 +51,16 @@ class GuildBaseScene extends Phaser.Scene {
   createAnimations() {
     const directions = [['down', 0], ['left', 4], ['right', 8], ['up', 12]];
     directions.forEach(([dir, start]) => {
-      this.anims.create({ key: `guild-player-${dir}`, frames: this.anims.generateFrameNumbers('guildPlayer', { start, end: start + 3 }), frameRate: 8, repeat: -1 });
-      this.anims.create({ key: `guild-npc-${dir}`, frames: this.anims.generateFrameNumbers('guildNpc', { start, end: start + 3 }), frameRate: 5, repeat: -1 });
+      this.createSafeAnimation(`guild-player-${dir}`, 'guildPlayer', start, start + 3, 8);
+      this.createSafeAnimation(`guild-npc-${dir}`, 'guildNpc', start, start + 3, 5);
     });
+  }
+
+  createSafeAnimation(key, texture, start, end, frameRate) {
+    if (!this.textures.exists(texture) || this.anims.exists(key)) return;
+    const frames = this.anims.generateFrameNumbers(texture, { start, end });
+    if (!frames.length) return;
+    this.anims.create({ key, frames, frameRate, repeat: -1 });
   }
 
   drawRoom() {
@@ -70,7 +77,7 @@ class GuildBaseScene extends Phaser.Scene {
 
   createPlayer() {
     this.player = this.add.sprite(this.spawn.x, this.spawn.y, 'guildPlayer', 0).setDisplaySize(48, 96).setDepth(20);
-    this.player.play('guild-player-down');
+    if (this.anims.exists('guild-player-down')) this.player.play('guild-player-down');
     this.physics.add.existing(this.player);
     this.player.body.setCollideWorldBounds(true);
     this.player.body.setSize(30, 40).setOffset(9, 52);
@@ -110,7 +117,8 @@ class GuildBaseScene extends Phaser.Scene {
     this.player.body.setVelocity(vx / length * 230, vy / length * 230);
     if (vx || vy) {
       const dir = Math.abs(vx) > Math.abs(vy) ? (vx < 0 ? 'left' : 'right') : (vy < 0 ? 'up' : 'down');
-      this.player.play(`guild-player-${dir}`, true);
+      const animationKey = `guild-player-${dir}`;
+      if (this.anims.exists(animationKey)) this.player.play(animationKey, true);
     } else this.player.anims.pause();
     if (Phaser.Input.Keyboard.JustDown(this.keys.E) || Phaser.Input.Keyboard.JustDown(this.keys.ENTER)) this.interact();
     if (Phaser.Input.Keyboard.JustDown(this.keys.ESC)) this.scene.start('MainMenuScene');
@@ -192,9 +200,9 @@ export class GuildScene extends GuildBaseScene {
     ];
     this.npcs = defs.map(([name, x, y, frame]) => {
       const key = `guild-npc-${frame}`;
-      if (!this.anims.exists(key)) this.anims.create({ key, frames: this.anims.generateFrameNumbers('guildNpc', { start: frame, end: frame + 3 }), frameRate: 5, repeat: -1 });
+      this.createSafeAnimation(key, 'guildNpc', frame, frame + 3, 5);
       const npc = this.add.sprite(x, y, 'guildNpc', frame).setDisplaySize(48, 96).setDepth(20).setData({ name, label: name, action: name === 'Guild Master' || name === 'Receptionist' ? 'daily' : 'talk' });
-      npc.play(key); return npc;
+      if (this.anims.exists(key)) npc.play(key); return npc;
     });
   }
   createGates() {
