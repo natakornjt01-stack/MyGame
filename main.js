@@ -9,6 +9,8 @@ import Quest from './quest.js';
 import NPC from './npc.js';
 import Shop from './shop.js';
 import AudioManager from './audio.js';
+import { GuildScene, TrainingRoomScene, RestRoomScene, SecretRoomScene } from './guild.js';
+import DailyQuest from './dailyQuest.js';
 
 // ERROR DETECTOR
 window.addEventListener('error',e=>{
@@ -63,6 +65,7 @@ const SKILL_BURST_RADIUS=170;
 let quest=null;
 let questOpen=false;
 let questPanel=null;
+let questTab='quest';
 let questTrackerText=null;
 let questTrackerButton=null;
 
@@ -80,6 +83,7 @@ const PLAYER_POWER_COOLDOWN=20000;
 // NPC
 let npcObjects=[];
 let nearbyNPC=null;
+let nearbyGuildGate=null;
 let npcOpen=false;
 let npcPanel=null;
 let npcTalkText=null;
@@ -191,7 +195,7 @@ const POWER_UI_X=237;
 const POWER_UI_Y=48;
 const POWER_BAR_WIDTH=300;
 const POWER_BAR_HEIGHT=18;
-const POWER_FILL_WIDTH=234;
+const POWER_FILL_WIDTH=294;
 
 // HUD TEXT STYLE
 const UI_TEXT_SIZE='15px';
@@ -256,6 +260,7 @@ let bgForestLayer=null;
 let currentStage=stage1;
 let currentStageNumber=1;
 let stageTransitioning=false;
+let dailyQuest=null;
 
 // INPUT
 let leftPressed=false;
@@ -400,8 +405,9 @@ shopOpen=false;
 shopPanel=null;
 shopCoinText=null;
 shopPointerHandler=null;
-   // QUEST
- quest=new Quest(data.quest);
+      // QUEST
+     quest=new Quest(data.quest);
+     dailyQuest=new DailyQuest(data.dailyQuest);
 
   inventoryOpen=false;
   inventoryPanel=null;
@@ -620,8 +626,9 @@ playerShadow.setDepth(9);
    null,
    this
   );
-   // NPC
-this.createNPCs();
+      // NPC
+    this.createNPCs();
+    this.createGuildGate();
    this.npcKey=this.input.keyboard.addKey(
  Phaser.Input.Keyboard.KeyCodes.E
 );
@@ -749,13 +756,8 @@ this.cameras.main.startFollow(
 
  // UPDATE
  update(){
-    if(!player||!player.body)return;
-
-    this.syncScreenUIToCameraZoom();
-
-    // อัปเดตหลอดและข้อความ HUD หลังซิงก์กล้อง
-    this.updateHPUI();
-    this.updateEXPUI();
+  if(!player||!player.body)return;
+  this.syncScreenUIToCameraZoom();
 
   if(saveKey&&Phaser.Input.Keyboard.JustDown(saveKey)){
    this.saveGame();
@@ -1198,8 +1200,9 @@ if(questOpen){
    checkpointX,
    checkpointY,
    inventory:inventory?.getData()??[],
-   equipment:equipment?.getData()??[],
-   quest:quest?.getData()??[]
+       equipment:equipment?.getData()??[],
+       quest:quest?.getData()??[],
+       dailyQuest:dailyQuest?.getData()??null
   };
  }
 
@@ -1256,8 +1259,9 @@ if(questOpen){
    checkpointX:Number(data.checkpointX),
    checkpointY:Number(data.checkpointY),
    inventory:Array.isArray(data.inventory)?data.inventory:[],
-   equipment:Array.isArray(data.equipment)?data.equipment:[],
-   quest:Array.isArray(data.quest)?data.quest:[]
+       equipment:Array.isArray(data.equipment)?data.equipment:[],
+       quest:Array.isArray(data.quest)?data.quest:[],
+       dailyQuest:data.dailyQuest||null
   });
 
   console.log('GAME LOADED');
@@ -1307,10 +1311,10 @@ if(questOpen){
    this.completeStage();
  }
 
- completeStage(){
-  if(stageTransitioning)return;
+    completeStage(){
+      if(stageTransitioning)return;
 
-  this.saveGame(false);
+      this.saveGame(false);
 
   stageTransitioning=true;
 
@@ -1376,30 +1380,20 @@ questOpen=false;
      return;
     }
 
-    const nextStage=
-     currentStageNumber+1;
-
-    this.scene.restart({
- stage:nextStage,
- keepProgress:true,
- playerHP,
- coinCount,
- playerLevel,
- playerEXP,
- playerEXPRequired,
- inventory:
-  inventory?
-  inventory.getData():
-  [],
- equipment:
-  equipment?
-  equipment.getData():
-  [],
- quest:
-  quest?
-  quest.getData():
-  []
-});
+        const nextStage=currentStageNumber+1;
+        this.scene.restart({
+         stage:nextStage,
+         keepProgress:true,
+         playerHP,
+         coinCount,
+         playerLevel,
+         playerEXP,
+         playerEXPRequired,
+         inventory:inventory?inventory.getData():[],
+         equipment:equipment?equipment.getData():[],
+         quest:quest?quest.getData():[],
+         dailyQuest:dailyQuest?dailyQuest.getData():null
+        });
    }
   );
  }
@@ -1499,8 +1493,8 @@ toggleQuestPanel(){
 
  questOpen=!questOpen;
 
- if(questOpen)
-  this.showQuestPanel();
+    if(questOpen)
+     questTab==='daily'?this.showDailyQuestPanel():this.showQuestPanel();
  else
   this.hideQuestPanel();
 }
@@ -1529,9 +1523,10 @@ showQuestPanel(){
   1
  );
 
- questPanel.add(bg);
-
- questPanel.add(
+     questPanel.add(bg);
+     this.addQuestTabs();
+    
+     questPanel.add(
   this.add.text(
    0,
    -145,
@@ -1671,7 +1666,33 @@ showQuestPanel(){
  );
 }
 
-updateQuestPanel(){
+    addQuestTabs(){
+     const makeTab=(x,label,tab)=>{
+      const b=this.add.rectangle(x,-112,130,28,tab===questTab?0x92400e:0x334155,1).setInteractive();
+      const t=this.add.text(x,-112,label,{fontFamily:'monospace',fontSize:'10px',fontStyle:'bold',color:'#fff'}).setOrigin(.5);
+      questPanel.add([b,t]);
+      b.on('pointerup',()=>{questTab=tab;this.hideQuestPanel();tab==='daily'?this.showDailyQuestPanel():this.showQuestPanel();});
+     };
+     makeTab(-75,'QUEST','quest');
+     makeTab(75,'DAILY','daily');
+    }
+
+    showDailyQuestPanel(){
+     if(questPanel||!dailyQuest)return;
+     questPanel=this.add.container(GAME_WIDTH/2,GAME_HEIGHT/2).setScrollFactor(0).setDepth(700);
+     const bg=this.add.rectangle(0,0,620,360,0x111827,.98).setStrokeStyle(4,0xf59e0b,1);
+     questPanel.add(bg); this.addQuestTabs();
+     questPanel.add(this.add.text(0,-145,'DAILY QUEST',{fontFamily:'monospace',fontSize:'28px',fontStyle:'bold',color:'#fbbf24',stroke:'#000',strokeThickness:4}).setOrigin(.5));
+     const close=this.add.rectangle(255,-145,70,28,0x334155,1).setInteractive();
+     questPanel.add([close,this.add.text(255,-145,'CLOSE',{fontFamily:'monospace',fontSize:'10px',fontStyle:'bold',color:'#fff'}).setOrigin(.5)]);
+     close.on('pointerdown',()=>this.toggleQuestPanel());
+     const q=dailyQuest.getCurrent(); const done=q.status==='COMPLETED'||q.status==='CLAIMED';
+     const box=this.add.rectangle(0,-20,560,130,done?0x14532d:0x1f2937,1).setStrokeStyle(2,done?0x22c55e:0x475569,1);
+     questPanel.add([box,this.add.text(-250,-55,`${done?'✓':'○'} ${q.name}\n${q.description}`,{fontFamily:'monospace',fontSize:'14px',fontStyle:'bold',color:'#fff',lineSpacing:8}),this.add.text(240,-20,`${q.progress}/${q.target}`,{fontFamily:'monospace',fontSize:'18px',fontStyle:'bold',color:done?'#86efac':'#fbbf24'}).setOrigin(1,.5),this.add.text(240,15,`+${q.reward.exp} EXP  +${q.reward.coin} COIN`,{fontFamily:'monospace',fontSize:'10px',color:'#cbd5e1'}).setOrigin(1,.5)]);
+     questPanel.add(this.add.text(0,100,`STATUS: ${q.status}`,{fontFamily:'monospace',fontSize:'13px',fontStyle:'bold',color:'#fff6a0'}).setOrigin(.5));
+    }
+
+    updateQuestPanel(){
  if(!questPanel)return;
 
 
@@ -4507,11 +4528,12 @@ this.handleQuestProgress(
    deathY
   );
 // QUEST KILL
-this.handleQuestProgress(
- quest?
- quest.onEnemyKill(enemy.enemyType):
- []
-);
+    this.handleQuestProgress(
+     quest?
+     quest.onEnemyKill(enemy.enemyType):
+     []
+    );
+    if(dailyQuest)dailyQuest.onEnemyKill(enemy.enemyType);
    
 
   if(enemy.body)
@@ -5094,56 +5116,42 @@ killPlayer(){
  }
 
 // UPDATE HP UI
-
-
 updateHPUI(){
-    // ป้องกันการเรียกก่อนสร้างหลอด HP สำเร็จ
-    if(!hpBar || !hpText) return;
+ if(!hpBar||!hpText)return;
 
-    const stats = this.getEquipmentStats();
+ const stats=this.getEquipmentStats();
 
-    const normalMaxHP = this.getPlayerMaxHP();
-    const powerMaxHP = PLAYER_POWER_MAX_HP + stats.maxHP;
+ const normalMaxHP=this.getPlayerMaxHP();
+ const powerMaxHP=PLAYER_POWER_MAX_HP+stats.maxHP;
 
-    const maxHP = Math.max(
-        1,
-        playerPowered ? powerMaxHP : normalMaxHP
-    );
+ const maxHP=playerPowered?
+  powerMaxHP:
+  normalMaxHP;
 
-    const currentHP = Phaser.Math.Clamp(
-        playerHP,
-        0,
-        maxHP
-    );
+ const currentHP=Phaser.Math.Clamp(
+  playerHP,0,maxHP
+ );
 
-    const percent = Phaser.Math.Clamp(
-        currentHP / maxHP,
-        0,
-        1
-    );
+ const percent=Phaser.Math.Clamp(
+  currentHP/maxHP,0,1
+ );
 
-    const zoom = Math.max(
-        this.cameras.main.zoom || 1,
-        0.01
-    );
+ hpBar.displayWidth=Math.max(
+  0,HP_FILL_WIDTH*percent
+ );
 
-    // ตรวจสอบอีกครั้งก่อนแก้ความกว้าง
-    if(!hpBar || !hpBar.active) return;
+ hpBar.setFillStyle(
+  percent<=.25?0xc62828:0xd94141
+ );
 
-    hpBar.displayWidth = Math.max(
-        0,
-        (HP_FILL_WIDTH * percent) / zoom
-    );
+ hpText.setText(
+  `HP ${currentHP}/${maxHP}`
+ );
 
-    hpBar.setFillStyle(
-        percent <= 0.25 ? 0xc62828 : 0xd94141
-    );
-
-    hpText.setText(
-        `HP ${currentHP}/${maxHP}`
-    );
+ hpText.setPosition(
+  HP_UI_X,HP_UI_Y
+ );
 }
-
 
  // POWER UI
  createPowerUI(){
@@ -5194,10 +5202,6 @@ updateHPUI(){
     return;
 
   const now = Date.now();
-   const zoom = Math.max(
-    this.cameras.main.zoom || 1,
-    0.01
-);
 
   // =====================================
   // สถานะ 1: กำลังใช้พลัง
@@ -5216,15 +5220,8 @@ updateHPUI(){
       1
     );
 
-    
-
-
-powerBar.displayWidth = Math.max(
-    0,
-    (POWER_FILL_WIDTH * percent) / zoom
-);
-
-
+    powerBar.displayWidth =
+      POWER_FILL_WIDTH * percent;
 
     powerText.setText(
       `POWER ${(remaining / 1000).toFixed(1)}s`
@@ -5257,7 +5254,8 @@ powerBar.displayWidth = Math.max(
       }
     }
 
-    
+    powerText.x = POWER_UI_X;
+    powerText.y = POWER_UI_Y;
 
     return;
   }
@@ -5432,10 +5430,18 @@ powerBar.displayWidth = Math.max(
    `LV ${playerLevel}`
   );
 
+  levelText.x=
+   EXP_UI_X-82;
+
+  levelText.y=
+   EXP_UI_Y-17;
+
   expText.setText(
    `EXP ${playerEXP} / ${playerEXPRequired}`
   );
 
+  expText.x=EXP_UI_X;
+  expText.y=EXP_UI_Y;
  }
 
  // COIN UI
@@ -5489,8 +5495,8 @@ powerBar.displayWidth = Math.max(
  }
 
   // NPC
-createNPCs(){
- npcObjects=[];
+    createNPCs(){
+     npcObjects=[];
 
  (currentStage.npcs||[]).forEach(data=>{
   const npc=new NPC(data);
@@ -5551,10 +5557,26 @@ createNPCs(){
   npc.mark=mark;
 
   npcObjects.push(npc);
- });
-}
+     });
+    }
 
-updateNPCs(){
+    createGuildGate(){
+     nearbyGuildGate=null;
+     const gateData=currentStage?.guildGate;
+     if(!gateData)return;
+     const floor=(currentStage.platforms||[]).find(p=>gateData.x>=p.x-p.width/2&&gateData.x<=p.x+p.width/2&&p.y>400);
+     const gateY=Number.isFinite(gateData.y)?gateData.y:(floor?floor.y-floor.height/2-HITBOX_HEIGHT/2:GROUND_Y-HITBOX_HEIGHT/2);
+     nearbyGuildGate=this.add.rectangle(gateData.x,gateY,76,110,0x6d3ca3,.9)
+      .setStrokeStyle(4,0xd8b4fe,1)
+      .setDepth(8);
+     nearbyGuildGate.setData('label','ENTER GUILD');
+     this.add.text(gateData.x,gateY-82,'GUILD',{
+      fontFamily:'monospace',fontSize:'14px',fontStyle:'bold',
+      color:'#e9d5ff',stroke:'#000000',strokeThickness:4
+     }).setOrigin(.5).setDepth(9);
+    }
+
+    updateNPCs(){
  if(!player||!npcObjects.length)return;
 
  let closest=null;
@@ -5584,32 +5606,72 @@ updateNPCs(){
   }
  });
 
- nearbyNPC=closest;
+     nearbyNPC=closest;
+     if(nearbyGuildGate&&player){
+      const gateDistance=Phaser.Math.Distance.Between(
+       player.x,player.y,nearbyGuildGate.x,nearbyGuildGate.y
+      );
+      nearbyGuildGate.__near=gateDistance<120&&(
+       !closest||gateDistance<distance
+      );
+      if(nearbyGuildGate.__near)nearbyNPC=null;
+     }
 
- if(talkButton){
-  talkButton.setVisible(!!closest);
-  if(talkButton.label)talkButton.label.setVisible(!!closest);
- }
+     if(talkButton){
+      const canTalk=!!closest||!!nearbyGuildGate?.__near;
+      talkButton.setVisible(canTalk);
+      if(talkButton.label)talkButton.label.setVisible(canTalk);
+      if(talkButton.label)talkButton.label.setText(nearbyGuildGate?.__near?'ENTER GUILD':'TALK');
+     }
 
  if(npcTalkText){
-  npcTalkText.setText(
-   closest?
+      npcTalkText.setText(
+       nearbyGuildGate?.__near?
+       'E / TALK : ENTER GUILD':
+       closest?
    `E / TALK : ${closest.name}`:
    ''
   );
  }
 }
 
-// NPC SHOP
-talkToNPC(){
+    enterGuild(){
+     this.scene.start('GuildScene',{
+      returnData:{
+       stage:currentStageNumber,
+       playerX:checkpointX,
+       playerY:checkpointY,
+       playerHP,
+       coinCount,
+       playerLevel,
+       playerEXP,
+       playerEXPRequired,
+       activeCheckpoint,
+       checkpointX,
+       checkpointY,
+       inventory:inventory?.getData()??[],
+       equipment:equipment?.getData()??[],
+       quest:quest?.getData()??[],
+       dailyQuest:dailyQuest?.getData()??null
+      }
+     });
+    }
+
+    // NPC SHOP
+    talkToNPC(){
  if(shopOpen)return;
 
- if(npcOpen){
-  this.nextNPCDialogue();
-  return;
- }
+     if(npcOpen){
+      this.nextNPCDialogue();
+      return;
+     }
 
- if(!nearbyNPC)return;
+     if(nearbyGuildGate?.__near){
+      this.enterGuild();
+      return;
+     }
+
+     if(!nearbyNPC)return;
 
  if(nearbyNPC.id==='merchant'){
   shopOpen=true;
@@ -6118,11 +6180,11 @@ rightButton = this.createControlButton(
   // วงสกิลขนาดเล็ก
   // -------------------------------------
 
-  this.createSkillButton('slash', 970, 530, '⚔');
+  this.createSkillButton('slash', 1010, 590, '⚔');
   
 this.createSkillButton('heal',   900, 650, '+');
   
-this.createSkillButton('burst', 1100, 500, '✦');
+this.createSkillButton('burst', 1100, 590, '✦');
   // -------------------------------------
   // ปุ่มโจมตีวงกลมขนาดใหญ่
   // -------------------------------------
@@ -6580,9 +6642,9 @@ class MainMenuScene extends Phaser.Scene{
   }
  }
 
- startNewGame(){
-  localStorage.removeItem(SAVE_KEY);
-  this.scene.start('GameScene',{
+    startNewGame(){
+      localStorage.removeItem(SAVE_KEY);
+      this.scene.start('GameScene',{
    stage:1,
    keepProgress:false,
    newGame:true
@@ -6863,10 +6925,10 @@ const config={
  },
  scale:{
   parent:'game-container',
-  mode: Phaser.Scale.FIT,
-autoCenter: Phaser.Scale.CENTER_BOTH
+  mode:Phaser.Scale.FIT,
+  autoCenter:Phaser.Scale.CENTER_BOTH
  },
- scene:[MainMenuScene,SettingsScene,GameScene]
+     scene:[MainMenuScene,SettingsScene,GameScene,GuildScene,TrainingRoomScene,RestRoomScene,SecretRoomScene]
 };
 
 // START

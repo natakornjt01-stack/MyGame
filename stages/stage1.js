@@ -41,13 +41,14 @@ const stage1={
   {x:3350,y:275}
  ],
  // CHECKPOINT
- checkpoints:[
-  {x:850,index:1},
-  {x:1700,index:2},
-  {x:2550,index:3},
-  {x:3300,index:4}
- ],
-  // NPC
+    checkpoints:[
+      {x:850,index:1},
+      {x:1700,index:2},
+      {x:2550,index:3},
+      {x:3300,index:4}
+     ],
+     guildGate:{x:2700},
+      // NPC
 npcs:[
  {id:'guide',x:250,y:565},
  {id:'merchant',x:1850,y:565}
@@ -61,4 +62,3 @@ npcs:[
  ]
 };
 export default stage1;
-
